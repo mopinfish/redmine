@@ -1,0 +1,40 @@
+# https://hub.docker.com/_/redmine
+version: '3.1'
+
+services:
+  redmine-db:
+    image: postgres:15.2-alpine
+    container_name: redmine-db
+    restart: always
+    volumes:
+        - ./db/data:/var/lib/postgresql/data
+        #- ./postgres/initdb:/docker-entrypoint-initdb.
+    environment:
+      POSTGRES_ROOT_PASSWORD: postgresadmin
+      POSTGRES_USER: redmine
+      POSTGRES_PASSWORD: redmine
+      POSTGRES_DB: redmine
+      TZ: Asia/Tokyo
+
+  redmine:
+    image: redmine:5.0.4-alpine
+    container_name: redmine
+    restart: always
+    ports:
+        - '8080:3000'
+    volumes:
+        - ./redmine/files:/usr/src/redmine/files
+        - ./redmine/log:/usr/src/redmine/log
+        - ./redmine/plugins:/usr/src/redmine/plugins
+        - ./redmine/public/themes:/usr/src/redmine/public/themes  
+    environment:
+      DB_HOST: host.docker.internal
+      DB_NAME: redmine
+      DB_USER: redmine
+      DB_PASS: redmine
+      REDMINE_SECRET_KEY_BASE: supersecretkey
+      TZ: Asia/Tokyo
+
+volumes:
+    redmine:
+    db:
