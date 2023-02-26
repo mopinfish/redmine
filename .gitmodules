@@ -1,0 +1,3 @@
+[submodule "redmine/plugins/redmine_thin_reports"]
+	path = redmine/plugins/redmine_thin_reports
+	url = git@github.com:mopinfish/redmine_thin_reports.git
