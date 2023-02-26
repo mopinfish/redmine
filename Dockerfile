@@ -1,6 +1,14 @@
 ARG RUBY_VERSION=3.2.1
 FROM redmine:5.0.4-alpine
 
+# test用のGem Installに失敗するため、libffi-devを加える
+RUN set -eux; \
+	\
+	apk add build-base \
+		libffi-dev \
+	; \
+	su-exec redmine bundle install --with test
+
 COPY /redmine/files /usr/src/redmine/files
 COPY /redmine/log /usr/src/redmine/log
 COPY /redmine/plugins /usr/src/redmine/plugins
