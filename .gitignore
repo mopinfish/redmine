@@ -50,3 +50,9 @@ db/data
 
 /redmine/log/*.log*
 /redmine/log/mongrel_debug
+/redmine/files/*
+!/redmine/files/delete.me
+/redmine/public/themes/*
+!/redmine/public/themes/alternate
+!/redmine/public/themes/classic
+!/redmine/public/themes/README
