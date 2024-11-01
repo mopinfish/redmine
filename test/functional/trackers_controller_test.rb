@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@ class TrackersControllerTest < Redmine::ControllerTest
   def test_index_by_user_should_respond_with_406
     @request.session[:user_id] = 2
     get :index
-    assert_response 406
+    assert_response :not_acceptable
   end
 
   def test_new
@@ -107,7 +107,7 @@ class TrackersControllerTest < Redmine::ControllerTest
         assert_select "input[type=checkbox][name=?][value=#{project_id}][checked=checked]", 'tracker[project_ids][]'
       end
       # project not checked
-      (Project.all.pluck(:id) - project_ids).each do |project_id|
+      (Project.pluck(:id) - project_ids).each do |project_id|
         assert_select "input[type=checkbox][name=?][value=#{project_id}]", 'tracker[project_ids][]'
       end
       # workflow copy selected
@@ -208,6 +208,9 @@ class TrackersControllerTest < Redmine::ControllerTest
 
     assert_select 'input[name=?][value=category_id]', 'tracker[core_fields][]'
     assert_select 'input[name=?][value=category_id][checked=checked]', 'tracker[core_fields][]', 0
+
+    assert_select 'input[name=?][value=priority_id]', 'tracker[core_fields][]'
+    assert_select 'input[name=?][value=priority_id][checked=checked]', 'tracker[core_fields][]', 0
 
     assert_select 'input[name=?][value=""][type=hidden]', 'tracker[core_fields][]'
   end

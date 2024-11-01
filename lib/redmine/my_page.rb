@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -81,7 +81,7 @@ module Redmine
         Dir.glob(
           "#{Redmine::Plugin.directory}/*/app/views/my/blocks/_*.{rhtml,erb}"
         ).inject({}) do |h, file|
-          name = File.basename(file).split('.').first.gsub(/^_/, '')
+          name = File.basename(file).split('.').first.delete_prefix('_')
           h[name] = {:label => name.to_sym, :partial => "my/blocks/#{name}"}
           h
         end

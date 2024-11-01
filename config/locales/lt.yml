@@ -142,6 +142,7 @@ lt:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Prašom parinkti
 
@@ -592,7 +593,6 @@ lt:
   label_reported_issues: Pranešti darbai
   label_assigned_issues: Priskirti darbai
   label_assigned_to_me_issues: Darbai, priskirti man
-  label_last_login: Paskutinis prisijungimas
   label_registered_on: Užregistruota
   label_activity: Veikla
   label_user_activity: "%{value} veikla"
@@ -729,7 +729,6 @@ lt:
   label_repository: Saugykla
   label_repository_new: Nauja saugykla
   label_repository_plural: Saugyklos
-  label_browse: Naršyti
   label_branch: Šaka
   label_tag: Tag'as
   label_revision: Revizija
@@ -1246,7 +1245,7 @@ lt:
   label_trackers_description: Pėdsekio aprašymas
   label_open_trackers_description: Rodyti visų pėdsekių aprašymus
   label_preferred_body_part_text: Tekstas
-  label_preferred_body_part_html: HTML (bandomoji versija)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Tėvinės užduoties tema
   permission_edit_own_issues: Redaguoti savo darbus
   text_select_apply_tracker: Pasirinkti pėdsekį
@@ -1259,7 +1258,6 @@ lt:
   text_gs_available: ImageMagick PDF palaikomas (nebūtinas)
   field_recently_used_projects: Neseniai naudotų projektų skaičius jump box
   label_optgroup_bookmarks: Žymės
-  label_optgroup_others: Kiti projektai
   label_optgroup_recents: Pastaruoju metu naudota
   button_project_bookmark: Pridėti žymę
   button_project_bookmark_delete: Pašalinti žymę
@@ -1435,3 +1433,29 @@ lt:
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
   permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval
+  setting_copy_attachments_on_issue_copy: Copy attachments on copy
+  field_thousands_delimiter: Thousands delimiter
+  label_involved_principals: Author / Previous assignee
+  label_attachment_summary:
+    zero: "%{filename}"
+    one: "%{filename} and 1 file"
+    other: "%{filename} and %{count} files"

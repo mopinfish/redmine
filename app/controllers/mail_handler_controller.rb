@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -61,7 +61,7 @@ class MailHandlerController < ActionController::Base
     if MailHandler.safe_receive(email, options)
       head :created
     else
-      head :unprocessable_entity
+      head :unprocessable_content
     end
   end
 
@@ -70,7 +70,7 @@ class MailHandlerController < ActionController::Base
   def check_credential
     User.current = nil
     unless Setting.mail_handler_api_enabled? && secure_compare(params[:key].to_s, Setting.mail_handler_api_key.to_s)
-      render :plain => 'Access denied. Incoming emails WS is disabled or key is invalid.', :status => 403
+      render :plain => 'Access denied. Incoming emails WS is disabled or key is invalid.', :status => :forbidden
     end
   end
 end

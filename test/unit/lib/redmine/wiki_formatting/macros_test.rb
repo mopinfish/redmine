@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,11 +20,9 @@
 require_relative '../../../../test_helper'
 
 class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
-  include ApplicationHelper
   include ActionView::Helpers::TextHelper
   include ActionView::Helpers::SanitizeHelper
   include ERB::Util
-  include Rails.application.routes.url_helpers
   extend ActionView::Helpers::SanitizeHelper::ClassMethods
 
   fixtures :projects, :roles, :enabled_modules, :users,
@@ -278,6 +276,13 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
       assert_select_in result, 'a.collapsible.icon-collapsed', :text => 'Show example'
       assert_select_in result, 'a.collapsible.icon-expanded', :text => 'Hide example'
     end
+  end
+
+  def test_macro_collapse_with_arg_contains_comma
+    text = %|{{collapse("Click here, to see the example", Hide example)\n*Collapsed* block of text\n}}|
+    result = textilizable(text)
+    assert_select_in result, 'a.collapsible.icon-collapsed', :text => 'Click here, to see the example'
+    assert_select_in result, 'a.collapsible.icon-expanded', :text => 'Hide example'
   end
 
   def test_macro_collapse_should_not_break_toc

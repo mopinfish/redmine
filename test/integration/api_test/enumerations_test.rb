@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@ class Redmine::ApiTest::EnumerationsTest < Redmine::ApiTest::Base
 
   test "GET /enumerations/invalid_subclass.xml should return 404" do
     get '/enumerations/invalid_subclass.xml'
-    assert_response 404
+    assert_response :not_found
     assert_equal 'application/xml', response.media_type
   end
 end

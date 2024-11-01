@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class CustomField < ActiveRecord::Base
+class CustomField < ApplicationRecord
   include Redmine::SafeAttributes
   include Redmine::SubclassFactory
 
@@ -100,7 +100,9 @@ class CustomField < ActiveRecord::Base
     'user_role',
     'version_status',
     'extensions_allowed',
-    'full_width_layout')
+    'full_width_layout',
+    'thousands_delimiter'
+  )
 
   def copy_from(arg, options={})
     return if arg.blank?
@@ -225,6 +227,10 @@ class CustomField < ActiveRecord::Base
     text_formatting == 'full'
   end
 
+  def thousands_delimiter?
+    thousands_delimiter == '1'
+  end
+
   # Returns a ORDER BY clause that can used to sort customized
   # objects by their value of the custom field.
   # Returns nil if the custom field can not be used for sorting.
@@ -263,6 +269,8 @@ class CustomField < ActiveRecord::Base
   end
 
   def <=>(field)
+    return nil unless field.is_a?(CustomField)
+
     position <=> field.position
   end
 
@@ -293,7 +301,7 @@ class CustomField < ActiveRecord::Base
 
     unless errs.any?
       if value.is_a?(Array)
-        if !multiple?
+        unless multiple?
           errs << ::I18n.t('activerecord.errors.messages.invalid')
         end
         if is_required? && value.detect(&:present?).nil?

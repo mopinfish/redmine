@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class Changeset < ActiveRecord::Base
+class Changeset < ApplicationRecord
   belongs_to :repository
   belongs_to :user
   has_many :filechanges, :class_name => 'Change', :dependent => :delete_all
@@ -60,8 +60,8 @@ class Changeset < ActiveRecord::Base
     where(Project.allowed_to_condition(args.shift || User.current, :view_changesets, *args))
   end)
 
-  after_create :scan_for_issues
   before_create :before_create_cs
+  after_create :scan_for_issues
 
   def revision=(r)
     write_attribute :revision, (r.nil? ? nil : r.to_s)

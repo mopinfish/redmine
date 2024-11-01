@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,13 +21,14 @@ require_relative '../test_helper'
 
 class WatchersHelperTest < Redmine::HelperTest
   include WatchersHelper
-  include Rails.application.routes.url_helpers
+  include AvatarsHelper
+  include ERB::Util
 
   fixtures :users, :issues
 
   test '#watcher_link with a non-watched object' do
     expected = link_to(
-      "Watch",
+      sprite_icon("fav", "Watch"),
       "/watchers/watch?object_id=1&object_type=issue",
       :remote => true, :method => 'post', :class => "issue-1-watcher icon icon-fav-off"
     )
@@ -36,7 +37,7 @@ class WatchersHelperTest < Redmine::HelperTest
 
   test '#watcher_link with a single object array' do
     expected = link_to(
-      "Watch",
+      sprite_icon("fav", "Watch"),
       "/watchers/watch?object_id=1&object_type=issue",
       :remote => true, :method => 'post', :class => "issue-1-watcher icon icon-fav-off"
     )
@@ -45,7 +46,7 @@ class WatchersHelperTest < Redmine::HelperTest
 
   test '#watcher_link with a multiple objects array' do
     expected = link_to(
-      "Watch",
+      sprite_icon("fav", "Watch"),
       "/watchers/watch?object_id%5B%5D=1&object_id%5B%5D=3&object_type=issue",
       :remote => true, :method => 'post', :class => "issue-bulk-watcher icon icon-fav-off"
     )
@@ -60,10 +61,37 @@ class WatchersHelperTest < Redmine::HelperTest
     Watcher.create!(:watchable => Issue.find(1), :user => User.find(1))
 
     expected = link_to(
-      "Unwatch",
+      sprite_icon("fav", "Unwatch"),
       "/watchers/watch?object_id=1&object_type=issue",
       :remote => true, :method => 'delete', :class => "issue-1-watcher icon icon-fav"
     )
     assert_equal expected, watcher_link(Issue.find(1), User.find(1))
+  end
+
+  def test_watchers_list_should_be_sorted_by_user_name
+    issue = Issue.find(1)
+    [1, 2, 3].shuffle.each do |user_id|
+      Watcher.create!(:watchable => issue, :user => User.find(user_id))
+    end
+
+    with_settings user_format: 'firstname_lastname' do
+      result1 = watchers_list(issue)
+      assert_select_in result1, 'ul.watchers' do
+        assert_select 'li', 3
+        assert_select 'li:nth-of-type(1)>a[href=?]', '/users/3', text: 'Dave Lopper'
+        assert_select 'li:nth-of-type(2)>a[href=?]', '/users/2', text: 'John Smith'
+        assert_select 'li:nth-of-type(3)>a[href=?]', '/users/1', text: 'Redmine Admin'
+      end
+    end
+
+    with_settings user_format: 'lastname_firstname' do
+      result2 = watchers_list(issue)
+      assert_select_in result2, 'ul.watchers' do
+        assert_select 'li', 3
+        assert_select 'li:nth-of-type(1)>a[href=?]', '/users/1', text: 'Admin Redmine'
+        assert_select 'li:nth-of-type(2)>a[href=?]', '/users/3', text: 'Lopper Dave'
+        assert_select 'li:nth-of-type(3)>a[href=?]', '/users/2', text: 'Smith John'
+      end
+    end
   end
 end

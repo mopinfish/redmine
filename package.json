@@ -2,7 +2,6 @@
   "dependencies": {
   },
   "devDependencies": {
-    "stylelint": "^14.16.0"
-  },
-  "packageManager": "yarn@1.22.19"
+    "stylelint": "^15.11.0"
+  }
 }

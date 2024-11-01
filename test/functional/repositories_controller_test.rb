@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -93,7 +93,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
         }
       )
     end
-    assert_response 302
+    assert_response :found
     repository = Repository.order('id DESC').first
     assert_kind_of Repository::Subversion, repository
     assert_equal 'file:///test', repository.url
@@ -138,7 +138,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal 'test_update', Repository.find(11).password
   end
 
@@ -162,7 +162,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
     assert_difference 'Repository.count', -1 do
       delete(:destroy, :params => {:id => 11})
     end
-    assert_response 302
+    assert_response :found
     assert_nil Repository.find_by_id(11)
   end
 
@@ -237,7 +237,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
       role.add_permission! :manage_repository
       Repository::Subversion.any_instance.expects(:fetch_changesets).once
       post(:fetch_changesets, :params => {:id => 1, :repository_id => 10})
-      assert_response :success
+      assert_redirected_to '/projects/ecookbook/repository/10'
 
       role.remove_permission! :manage_repository
       Repository::Subversion.any_instance.expects(:fetch_changesets).never
@@ -279,7 +279,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
         :repository_id => 'foo'
       }
     )
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_revision
@@ -523,7 +523,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
       assert_equal User.find(2), c.reload.user
     end
   end

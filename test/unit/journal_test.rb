@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -142,6 +142,21 @@ class JournalTest < ActiveSupport::TestCase
     end
   end
 
+  def test_create_should_not_add_anonymous_as_watcher
+    Role.anonymous.add_permission!(:add_issue_watchers)
+
+    user = User.anonymous
+    assert user.pref.auto_watch_on?('issue_contributed_to')
+
+    journal = Journal.new(:journalized => Issue.first, :notes => 'notes', :user => user)
+
+    assert_no_difference 'Watcher.count' do
+      assert journal.save
+      assert journal.valid?
+      assert journal.journalized.valid?
+    end
+  end
+
   def test_visible_scope_for_anonymous
     # Anonymous user should see issues of public projects only
     journals = Journal.visible(User.anonymous).to_a
@@ -264,6 +279,6 @@ class JournalTest < ActiveSupport::TestCase
 
     # User "dlopper" has "Developer" role on project "eCookbook"
     # Role "Developer" does not have the "View private notes" permission
-    assert_equal [1, 2], journal.notified_mentions.map(&:id)
+    assert_equal [1, 2], journal.notified_mentions.map(&:id).sort
   end
 end

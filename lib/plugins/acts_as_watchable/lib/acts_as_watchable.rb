@@ -1,5 +1,22 @@
 # frozen_string_literal: true
 
+# Redmine - project management software
+# Copyright (C) 2006-  Jean-Philippe Lang
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # ActsAsWatchable
 module Redmine
   module Acts
@@ -11,6 +28,7 @@ module Redmine
       module ClassMethods
         def acts_as_watchable(options = {})
           return if self.included_modules.include?(Redmine::Acts::Watchable::InstanceMethods)
+
           class_eval do
             has_many :watchers, :as => :watchable, :dependent => :delete_all
             has_many :watcher_users, :through => :watchers, :source => :user, :validate => false
@@ -42,19 +60,46 @@ module Redmine
           users
         end
 
+        # array of watchers that the given user is allowed to see
+        def visible_watcher_users(user = User.current)
+          if user.allowed_to?(:"view_#{self.class.name.underscore}_watchers", project)
+            watcher_users
+          else
+            # without permission, the user can only see themselves (if they're a watcher)
+            watcher_users & [user]
+          end
+        end
+
+        # true if user can be added as a watcher
+        def valid_watcher?(user)
+          return true unless respond_to?(:visible?)
+          return true unless user.is_a?(User)
+
+          visible?(user)
+        end
+
         # Adds user as a watcher
         def add_watcher(user)
-          # Rails does not reset the has_many :through association
-          watcher_users.reset
-          self.watchers << Watcher.new(:user => user)
+          if persisted?
+            # Rails does not reset the has_many :through association
+            watcher_users.reset
+            self.watchers << Watcher.new(:user => user)
+          else
+            self.watcher_users << user
+          end
         end
 
         # Removes user from the watchers list
         def remove_watcher(user)
           return nil unless user && (user.is_a?(User) || user.is_a?(Group))
-          # Rails does not reset the has_many :through association
-          watcher_users.reset
-          watchers.where(:user_id => user.id).delete_all
+
+          if persisted?
+            # Rails does not reset the has_many :through association
+            watcher_users.reset
+            watchers.where(:user_id => user.id).delete_all
+          else
+            watcher_users.delete(user)
+          end
         end
 
         # Adds/removes watcher

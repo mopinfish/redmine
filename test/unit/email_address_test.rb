@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -63,5 +63,15 @@ class EmailAddressTest < ActiveSupport::TestCase
       email = EmailAddress.new(address: 'user@foo.subdomain.test')
       assert email.valid?
     end
+  end
+
+  def test_should_reject_invalid_email
+    assert_not EmailAddress.new(address: 'invalid,email@example.com').valid?
+  end
+
+  def test_should_normalize_idn_email_address
+    email = EmailAddress.new(address: 'marie@société.example')
+    assert_equal 'marie@xn--socit-esab.example', email.address
+    assert email.valid?
   end
 end

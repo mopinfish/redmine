@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class Role < ActiveRecord::Base
+class Role < ApplicationRecord
   include Redmine::SafeAttributes
 
   # Custom coder for the permissions attribute that should be an
@@ -76,7 +76,7 @@ class Role < ActiveRecord::Base
   has_many :members, :through => :member_roles
   acts_as_positioned :scope => :builtin
 
-  serialize :permissions, ::Role::PermissionsAttributeCoder
+  serialize :permissions, coder: ::Role::PermissionsAttributeCoder
   store :settings, :accessors => [:permissions_all_trackers, :permissions_tracker_ids]
 
   validates_presence_of :name
@@ -155,14 +155,14 @@ class Role < ActiveRecord::Base
   end
 
   def <=>(role)
-    if role
-      if builtin == role.builtin
-        position <=> role.position
-      else
-        builtin <=> role.builtin
-      end
+    # returns -1 for nil since r2726
+    return -1 if role.nil?
+    return nil unless role.is_a?(Role)
+
+    if builtin == role.builtin
+      position <=> role.position
     else
-      -1
+      builtin <=> role.builtin
     end
   end
 
@@ -224,7 +224,7 @@ class Role < ActiveRecord::Base
 
   def permissions_tracker_ids=(arg)
     h = arg.to_hash
-    h.values.each {|v| v.reject!(&:blank?)}
+    h.each_value {|v| v.reject!(&:blank?)}
     super(h)
   end
 

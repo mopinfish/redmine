@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -33,7 +33,6 @@ class MyController < ApplicationController
   helper :custom_fields
   helper :queries
   helper :activities
-  helper :calendars
 
   def index
     page
@@ -56,7 +55,6 @@ class MyController < ApplicationController
       @user.pref.safe_attributes = params[:pref]
       if @user.save
         @user.pref.save
-        set_language_if_valid @user.language
         respond_to do |format|
           format.html do
             flash[:notice] = l(:notice_account_updated)
@@ -132,12 +130,6 @@ class MyController < ApplicationController
     redirect_to my_account_path
   end
 
-  # TODO: remove in Redmine 6.0
-  def reset_rss_key
-    ActiveSupport::Deprecation.warn "My#reset_rss_key is deprecated and will be removed in Redmine 6.0. Please use #reset_atom_key instead."
-    reset_atom_key
-  end
-
   def show_api_key
     @user = User.current
   end
@@ -203,6 +195,6 @@ class MyController < ApplicationController
     @user = User.current
     @user.pref.order_blocks params[:group], params[:blocks]
     @user.pref.save
-    head 200
+    head :ok
   end
 end

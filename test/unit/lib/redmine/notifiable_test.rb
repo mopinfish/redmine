@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ class Redmine::NotifiableTest < ActiveSupport::TestCase
 
   def test_all
     %w(issue_added issue_updated issue_note_added issue_status_updated
-       issue_assigned_to_updated issue_priority_updated news_added
+       issue_assigned_to_updated issue_priority_updated issue_fixed_version_updated issue_attachment_added news_added
        news_comment_added document_added file_added
        message_posted
        wiki_content_added wiki_content_updated).each do |notifiable|

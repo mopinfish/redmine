@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # FileSystem adapter
 # File written by Paul Rivier, at Demotera.
@@ -26,7 +26,6 @@ module Redmine
   module Scm
     module Adapters
       class FilesystemAdapter < AbstractAdapter
-
         class << self
           def client_available
             true
@@ -35,8 +34,7 @@ module Redmine
 
         def initialize(url, root_url=nil, login=nil, password=nil,
                        path_encoding=nil)
-          @url = with_trailing_slash(url)
-          @path_encoding = path_encoding.blank? ? 'UTF-8' : path_encoding
+          super(with_trailing_slash(url), nil, nil, nil, path_encoding)
         end
 
         def path_encoding

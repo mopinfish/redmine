@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -126,7 +126,7 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
         if @ruby19_non_utf8_pass
           puts "TODO: show repository file contents test fails " \
                "when Encoding.default_external is not UTF-8. " \
-               "Current value is '#{Encoding.default_external.to_s}'"
+               "Current value is '#{Encoding.default_external}'"
         else
           assert_select 'tr#L3 td.line-code', :text => /日本語/
         end
@@ -176,7 +176,7 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
           }
         )
       end
-      assert_response 302
+      assert_response :found
       @project.reload
       assert_nil @project.repository
     end
@@ -198,7 +198,7 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
           }
         )
       end
-      assert_response 302
+      assert_response :found
       @project.reload
       assert_nil @project.repository
     end

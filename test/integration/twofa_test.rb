@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -56,7 +56,7 @@ class TwofaTest < Redmine::IntegrationTest
     user = User.find_by_login 'jsmith'
     assert_not user.must_activate_twofa?
 
-    group = Group.all.first
+    group = Group.first
     group.update_column :twofa_required, true
     group.users << user
     user.reload

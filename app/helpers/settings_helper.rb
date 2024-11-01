@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -157,6 +157,16 @@ module SettingsHelper
   end
 
   def link_copied_issue_options
+    options = [
+      [:general_text_Yes, 'yes'],
+      [:general_text_No, 'no'],
+      [:label_ask, 'ask']
+    ]
+
+    options.map {|label, value| [l(label), value.to_s]}
+  end
+
+  def copy_attachments_on_issue_copy_options
     options = [
       [:general_text_Yes, 'yes'],
       [:general_text_No, 'no'],

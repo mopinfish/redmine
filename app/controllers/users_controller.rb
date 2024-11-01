@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,6 +45,16 @@ class UsersController < ApplicationController
     use_session = !request.format.csv?
     retrieve_query(UserQuery, use_session)
 
+    # API backwards compatibility: handle legacy filter parameters
+    unless request.format.html?
+      if name = params[:name].presence
+        @query.add_filter 'name', '~', [name]
+      end
+      if group_id = params[:group_id].presence
+        @query.add_filter 'is_member_of_group', '=', [group_id]
+      end
+    end
+
     if @query.valid?
       scope = @query.results_scope
 
@@ -60,8 +70,8 @@ class UsersController < ApplicationController
         end
         format.csv do
           # Export all entries
-          @entries = scope.to_a
-          send_data(query_to_csv(@entries, @query, params), :type => 'text/csv; header=present', :filename => 'users.csv')
+          entries = scope.to_a
+          send_data(query_to_csv(entries, @query, params), :type => 'text/csv; header=present', :filename => "#{filename_for_export(@query, 'users')}.csv")
         end
         format.api do
           @offset, @limit = api_offset_and_limit
@@ -71,7 +81,7 @@ class UsersController < ApplicationController
     else
       respond_to do |format|
         format.html {render :layout => !request.xhr?}
-        format.csv {head :unprocessable_entity}
+        format.csv {head :unprocessable_content}
         format.api {render_validation_errors(@query)}
       end
     end
@@ -221,15 +231,19 @@ class UsersController < ApplicationController
     @users = User.logged.where(id: params[:ids]).where.not(id: User.current)
     (render_404; return) unless @users.any?
 
-    if params[:lock]
-      @users.update_all status: User::STATUS_LOCKED
-      flash[:notice] = l(:notice_successful_update)
-      redirect_to users_path
-    elsif params[:confirm] == I18n.t(:general_text_Yes)
+    if params[:confirm] == I18n.t(:general_text_Yes)
       @users.destroy_all
       flash[:notice] = l(:notice_successful_delete)
       redirect_to users_path
     end
+  end
+
+  def bulk_lock
+    bulk_update_status(params[:ids], User::STATUS_LOCKED)
+  end
+
+  def bulk_unlock
+    bulk_update_status(params[:ids], User::STATUS_ACTIVE)
   end
 
   private
@@ -245,5 +259,14 @@ class UsersController < ApplicationController
     end
   rescue ActiveRecord::RecordNotFound
     render_404
+  end
+
+  def bulk_update_status(user_ids, status)
+    users = User.logged.where(id: user_ids).where.not(id: User.current)
+    (render_404; return) unless users.any?
+
+    users.update_all status: status
+    flash[:notice] = l(:notice_successful_update)
+    redirect_to users_path
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -160,7 +160,7 @@ class RolesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
     assert_equal false, role.all_roles_managed
     assert_equal [2, 3], role.managed_role_ids.sort
@@ -186,7 +186,7 @@ class RolesControllerTest < Redmine::ControllerTest
 
   def test_edit_invalid_should_respond_with_404
     get :edit, :params => {:id => 999}
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_update

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
   REPOSITORY_PATH = Rails.root.join('tmp/test/git_repository').to_s
   REPOSITORY_PATH.tr!('/', "\\") if Redmine::Platform.mswin?
   PRJ_ID     = 3
-  NUM_REV = 28
+  NUM_REV = 29
 
   def setup
     super
@@ -63,7 +63,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
         }
       )
     end
-    assert_response 302
+    assert_response :found
     repository = Repository.order('id DESC').first
     assert_kind_of Repository::Git, repository
     assert_equal '/test', repository.url
@@ -78,7 +78,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     repo2 = Repository.find(repository.id)
     assert_equal false, repo2.report_last_commit
   end
@@ -589,9 +589,14 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
 
       # Line 23, changeset 2f9c0091
       assert_select 'tr' do
+        prev_blame, path = '4a79347ea4b7184938d9bbea0fd421a6079f71bb', 'sources/watchers_controller.rb'
         assert_select 'th.line-num a[data-txt=?]', '23'
         assert_select 'td.revision', :text => /2f9c0091/
         assert_select 'td.author', :text => 'jsmith'
+        assert_select 'td.previous' do
+          assert_select 'a.icon-history[href=?]',
+                        "/projects/subproject1/repository/#{@repository.id}/revisions/#{prev_blame}/annotate/#{path}"
+        end
         assert_select 'td', :text => /remove_watcher/
       end
     end
@@ -759,7 +764,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
             :rev => r
           }
         )
-        assert_response 404
+        assert_response :not_found
         assert_select_error /was not found/
       end
     end
@@ -779,7 +784,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
           }
         )
       end
-      assert_response 302
+      assert_response :found
       @project.reload
       assert_nil @project.repository
     end
@@ -806,7 +811,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
           }
         )
       end
-      assert_response 302
+      assert_response :found
       @project.reload
       assert_nil @project.repository
     end
@@ -817,7 +822,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
 
   private
 
-  def with_cache(&block)
+  def with_cache(&)
     before = ActionController::Base.perform_caching
     ActionController::Base.perform_caching = true
     yield
@@ -827,6 +832,6 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
   def puts_pass_on_not_utf8
     puts "TODO: This test fails " +
          "when Encoding.default_external is not UTF-8. " +
-         "Current value is '#{Encoding.default_external.to_s}'"
+         "Current value is '#{Encoding.default_external}'"
   end
 end

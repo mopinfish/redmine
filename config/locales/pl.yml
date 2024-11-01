@@ -149,6 +149,7 @@ pl:
         must_contain_digits: "musi zawierać cyfry (0-9)"
         must_contain_special_chars: "musi zawierać znaki specjalne (!, $, %, ...)"
         domain_not_allowed: "zawiera niedozwoloną domenę (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: wybierz
 
@@ -313,6 +314,7 @@ pl:
   field_title: Tytuł
   field_project: Projekt
   field_issue: Zagadnienie
+  field_is_member_of_group: Członek grupy
   field_status: Status
   field_notes: Notatki
   field_is_closed: Zagadnienie zamknięte
@@ -333,7 +335,7 @@ pl:
   field_login: Login
   field_mail_notification: Powiadomienia e-mail
   field_admin: Administrator
-  field_last_login_on: Ostatnie połączenie
+  field_last_login_on: Ostatnie logowanie
   field_passwd_changed_on: Ostatnia zmiana hasła
   field_language: Język
   field_effective_date: Data
@@ -424,9 +426,11 @@ pl:
   field_history_default_tab: Domyślna zakładka historii zagadnienia
   field_unique_id: Unikalne ID
   field_toolbar_language_options: Lista języków z podświetlaniem składni dostępna w toolbarze
-  field_twofa_required: Wymagaj dwyskładnikowego uwierzytelnia
+  field_twofa_required: Wymagaj dwuskładnikowego uwierzytelnia
   field_default_issue_query: Domyślna kwerenda dla listy zagadnień
   field_default_project_query: Domyślna kwerenda dla listy projektów
+  field_default_time_entry_activity: Domyślna aktywność dla wpisów dziennika
+  field_any_searchable: Dowolny przeszukiwalny tekst
 
   setting_app_title: Tytuł aplikacji
   setting_welcome_text: Tekst powitalny
@@ -531,6 +535,7 @@ pl:
   permission_edit_project: Edycja projektów
   permission_close_project: Zamykanie/otwieranie projektów
   permission_delete_project: Usuwanie projektów
+  permission_select_project_publicity: Ustawianie projektu jako prywatny/publiczny
   permission_select_project_modules: Wybieranie modułów projektu
   permission_manage_members: Zarządzanie uczestnikami
   permission_manage_project_activities: Zarządzanie aktywnościami projektu
@@ -684,7 +689,6 @@ pl:
   label_assigned_issues: Przypisane zagadnienia
   label_assigned_to_me_issues: Zagadnienia przypisane do mnie
   label_updated_issues: Zaktualizowane zagadnienia
-  label_last_login: Ostatnie połączenie
   label_registered_on: Zarejestrowany
   label_activity: Aktywność
   label_user_activity: "Aktywność: %{value}"
@@ -766,7 +770,7 @@ pl:
   label_current_status: Obecny status
   label_new_statuses_allowed: Dozwolone nowe statusy
   label_all: wszystko
-  label_any: wszystko
+  label_any: dowolne
   label_none: brak
   label_nobody: nikt
   label_next: Następne
@@ -823,6 +827,7 @@ pl:
   label_more_than_ago: więcej niż dni temu
   label_ago: dni temu
   label_contains: zawiera
+  label_contains_any_of: zawiera dowolne z
   label_not_contains: nie zawiera
   label_starts_with: rozpoczyna się od
   label_ends_with: kończy się na
@@ -835,7 +840,6 @@ pl:
   label_repository: Repozytorium
   label_repository_new: Nowe repozytorium
   label_repository_plural: Repozytoria
-  label_browse: Przegląd
   label_branch: Branch
   label_tag: Tag
   label_revision: Rewizja
@@ -851,6 +855,7 @@ pl:
   label_latest_revision_plural: Najnowsze rewizje
   label_view_revisions: Pokaż rewizje
   label_view_all_revisions: Pokaż wszystkie rewizje
+  label_view_previous_annotation: Pokaż adnotacje dla wersji przed tą zmianą
   label_x_revisions: "%{count} rewizji"
   label_max_size: Maksymalny rozmiar
   label_roadmap: Mapa
@@ -975,6 +980,7 @@ pl:
   label_optional_description: Opcjonalny opis
   label_add_another_file: Dodaj kolejny plik
   label_auto_watch_on: Automatyczne obserwowanie
+  label_auto_watch_on_issue_created: Zagadnienia, które utworzyłem
   label_auto_watch_on_issue_contributed_to: Zagadnienia, w których brałem udział
   label_preferences: Preferencje
   label_chronological_order: W kolejności chronologicznej
@@ -997,7 +1003,7 @@ pl:
   label_group_plural: Grupy
   label_group_new: Nowa grupa
   label_group_anonymous: Anonimowi użytkownicy
-  label_group_non_member: Użytkownicy nie będący uczestnikami
+  label_group_non_member: Użytkownicy niebędący uczestnikami
   label_time_entry_plural: Przepracowany czas
   label_version_sharing_none: Brak współdzielenia
   label_version_sharing_descendants: Z podprojektami
@@ -1022,7 +1028,7 @@ pl:
   label_additional_workflow_transitions_for_author: Dodatkowe przejścia stanów dozwolone, gdy użytkownik jest autorem zagadnienia
   label_additional_workflow_transitions_for_assignee: Dodatkowe przejścia stanów dozwolone, gdy użytkownik jest przypisany do zagadnienia
   label_issues_visibility_all: Wszystkie
-  label_issues_visibility_public: Wszystkie nie prywatne
+  label_issues_visibility_public: Wszystkie nieprywatne
   label_issues_visibility_own: Utworzone lub przypisane do użytkownika
   label_git_report_last_commit: Wyświetlaj ostatni commit dla plików i katalogów
   label_parent_revision: Rodzic
@@ -1115,21 +1121,20 @@ pl:
   label_font_monospace: Czcionka o stałej szerokości
   label_font_proportional: Czcionka proporcjonalna
   label_optgroup_bookmarks: Zakładki
-  label_optgroup_others: Inne projekty
   label_optgroup_recents: Ostatnio używane
   label_last_notes: Ostatnie notatki
   label_default_queries:
     for_all_projects: Dla wszystkich projektów
     for_current_project: Dla obecnego projektu
     for_all_users: Dla wszystkich użytkowników
-    for_this_user: For this user
+    for_this_user: Dla tego użytkownika
   label_nothing_to_preview: Nie ma nic do podglądu
   label_inherited_from_parent_project: Dziedziczone z nadrzędnego projektu
   label_inherited_from_group: "Dziedziczone z grupy %{name}"
   label_trackers_description: Opis typów zagadnień
   label_open_trackers_description: Zobacz wszystkie opisy typów zagadnień
   label_preferred_body_part_text: Tekst
-  label_preferred_body_part_html: HTML (eksperymentalne)
+  label_preferred_body_part_html: HTML
   label_issue_history_properties: Zmiany właściwości
   label_issue_history_notes: Notatki
   label_last_tab_visited: Ostatnio oglądana zakładka
@@ -1210,6 +1215,7 @@ pl:
   button_edit_object: "Edytuj %{object_name}"
   button_delete_object: "Usuń %{object_name}"
   button_create_and_follow: Utwórz i przejdź
+  button_apply_issues_filter: Zastosuj filtr na liście zagadnień
 
   status_active: aktywny
   status_registered: zarejestrowany
@@ -1240,6 +1246,8 @@ pl:
   text_project_close_confirmation: Czy jesteś pewien, że chcesz oznaczyć projekt "%{value}" jako tylko do odczytu?
   text_project_reopen_confirmation: Czy jesteś pewien, że chcesz ponownie otworzyć projekt "%{value}"?
   text_project_archive_confirmation: Czy jesteś pewien, że chcesz zarchiwizować projekt "%{value}"?
+  text_users_bulk_destroy_head: 'Zamierzasz usunąć następujących użytkowników i wszystkie odwołania do nich. Tej operacji nie można cofnąć. Zwykle zablokowanie użytkowników jest lepszym rozwiązaniem, niż ich całkowite usunięcie.'
+  text_users_bulk_destroy_confirm: 'Aby potwierdzić, wpisz "%{yes}" w pole poniżej.'
   text_workflow_edit: Zaznacz rolę i typ zagadnienia do edycji przepływu pracy
   text_are_you_sure: Jesteś pewien?
   text_journal_changed: "Zmieniono %{label} z %{old} na %{new}"
@@ -1411,13 +1419,26 @@ pl:
   twofa_backup_codes_already_shown: Kody zapasowe nie mogą być ponownie wyświetlone, <a data-method="post" href="%{bc_path}">wygeneruj nowe kody</a> jeśli są potrzebne.
   twofa_text_group_required: "To ustawienie działa tylko wtedy, kiedy globalne ustawienie uwierzytelniania dwuskładnikowego jest ustawione na 'opcjonalne'. Aktualnie uwierzytelnianie dwuskładnikowe jest wymagane dla wszystkich użytkowników."
   twofa_text_group_disabled: "To ustawienie działa tylko wtedy, kiedy globalne ustawienie uwierzytelniania dwuskładnikowego jest ustawione na 'opcjonalne'. Aktualnie uwierzytelnienie dwuskładnikowe jest wyłączone."
-
   text_user_destroy_confirmation: "Czy jesteś pewien, że chcesz usunąć tego użytkownika i wszystkie odwołania do niego? Tej operacji nie można cofnąć. Zwykle zablokowanie użytkownika jest lepszym rozwiązaniem, niż jego całkowite usunięcie. Aby potwierdzić operację, podaj jego login (%{login}) poniżej."
   text_project_destroy_enter_identifier: "Aby potwierdzić, podaj identyfikator projektu (%{identifier}) poniżej."
-  field_is_member_of_group: Member of group
-  field_default_time_entry_activity: Default spent time activity
-  text_users_bulk_destroy_head: You are about to delete the following users and remove
-    all references to them. This cannot be undone. Often, locking users instead of deleting
-    them is the better solution.
-  text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
-  permission_select_project_publicity: Set project public or private
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval
+  setting_copy_attachments_on_issue_copy: Copy attachments on copy
+  field_thousands_delimiter: Thousands delimiter
+  label_involved_principals: Author / Previous assignee
+  label_attachment_summary:
+    zero: "%{filename}"
+    one: "%{filename} and 1 file"
+    other: "%{filename} and %{count} files"

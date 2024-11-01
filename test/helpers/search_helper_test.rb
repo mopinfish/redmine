@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -53,5 +53,37 @@ class SearchHelperTest < Redmine::HelperTest
         ('й' * 44) + ' ... ' + ('й' * 45),
       r
     )
+  end
+
+  def test_issues_filter_path
+    # rubocop:disable Layout/LineLength
+    assert_equal(
+      '/issues?f[]=status_id&f[]=any_searchable&f[]=project_id&op[any_searchable]=*~&op[project_id]==&op[status_id]=*&set_filter=1&sort=updated_on:desc&v[any_searchable][]=recipe&v[project_id][]=mine',
+      Addressable::URI.unencode(issues_filter_path('recipe', projects_scope: 'my_projects'))
+    )
+    assert_equal(
+      '/issues?f[]=status_id&f[]=any_searchable&f[]=project_id&op[any_searchable]=*~&op[project_id]==&op[status_id]=*&set_filter=1&sort=updated_on:desc&v[any_searchable][]=recipe&v[project_id][]=bookmarks',
+      Addressable::URI.unencode(issues_filter_path('recipe', projects_scope: 'bookmarks'))
+    )
+    assert_equal(
+      '/issues?f[]=status_id&f[]=any_searchable&op[any_searchable]=*~&op[status_id]=*&set_filter=1&sort=updated_on:desc&v[any_searchable][]=recipe',
+      Addressable::URI.unencode(issues_filter_path('recipe', projects_scope: 'all'))
+    )
+    # f[]=subject
+    assert_equal(
+      '/issues?f[]=status_id&f[]=subject&op[status_id]=*&op[subject]=*~&set_filter=1&sort=updated_on:desc&v[subject][]=recipe',
+      Addressable::URI.unencode(issues_filter_path('recipe', projects_scope: 'all', titles_only: '1'))
+    )
+    # op[subject]=~ (contains)
+    assert_equal(
+      '/issues?f[]=status_id&f[]=subject&op[status_id]=*&op[subject]=~&set_filter=1&sort=updated_on:desc&v[subject][]=recipe',
+      Addressable::URI.unencode(issues_filter_path('recipe', projects_scope: 'all', titles_only: '1', all_words: ''))
+    )
+    # op[status_id]=o (open)
+    assert_equal(
+      '/issues?f[]=status_id&f[]=subject&op[status_id]=o&op[subject]=*~&set_filter=1&sort=updated_on:desc&v[subject][]=recipe',
+      Addressable::URI.unencode(issues_filter_path('recipe', projects_scope: 'all', titles_only: '1', open_issues: '1'))
+    )
+    # rubocop:enable Layout/LineLength
   end
 end

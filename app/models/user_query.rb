@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,23 +34,24 @@ class UserQuery < Query
   ]
 
   def initialize(attributes=nil, *args)
-    super attributes
+    super(attributes)
     self.filters ||= { 'status' => {operator: "=", values: [User::STATUS_ACTIVE]} }
   end
 
   def initialize_available_filters
     add_available_filter "status",
-      type: :list, values: ->{ user_statuses_values }
+      type: :list_optional, values: ->{ user_statuses_values }
     add_available_filter "auth_source_id",
       type: :list_optional, values: ->{ auth_sources_values }
     add_available_filter "is_member_of_group",
       type: :list_optional,
-      values: ->{ Group.givable.visible.map {|g| [g.name, g.id.to_s] } }
+      values: ->{ Group.givable.visible.pluck(:name, :id).map {|name, id| [name, id.to_s]} }
     if Setting.twofa?
       add_available_filter "twofa_scheme",
         type: :list_optional,
         values: ->{ Redmine::Twofa.available_schemes.map {|s| [I18n.t("twofa__#{s}__name"), s] } }
     end
+    add_available_filter "name", type: :text, label: :field_name_or_email_or_login
     add_available_filter "login", type: :string
     add_available_filter "firstname", type: :string
     add_available_filter "lastname", type: :string
@@ -64,9 +65,7 @@ class UserQuery < Query
   end
 
   def auth_sources_values
-    AuthSource.order(name: :asc).to_a.map do |auth_source|
-      [auth_source.name, auth_source.id]
-    end
+    AuthSource.order(name: :asc).pluck(:name, :id)
   end
 
   def user_statuses_values
@@ -130,7 +129,7 @@ class UserQuery < Query
 
   def sql_for_is_member_of_group_field(field, operator, value)
     if ["*", "!*"].include? operator
-      value = Group.givable.map(&:id)
+      value = Group.givable.ids
     end
 
     e = operator.start_with?("!") ? "NOT EXISTS" : "EXISTS"
@@ -164,5 +163,31 @@ class UserQuery < Query
     end
 
     joins.any? ? joins.join(' ') : nil
+  end
+
+  def sql_for_name_field(field, operator, value)
+    case operator
+    when '*'
+      '1=1'
+    when '!*'
+      '1=0'
+    else
+      # match = (operator == '~')
+      match = !operator.start_with?('!')
+      matching_operator = operator.sub /^!/, ''
+      name_sql = %w(login firstname lastname).map{|field| sql_for_field(:name, operator, value, User.table_name, field)}
+
+      emails = EmailAddress.table_name
+      email_sql = <<-SQL
+        #{match ? "EXISTS" : "NOT EXISTS"}
+        (SELECT 1 FROM #{emails} WHERE
+          #{emails}.user_id = #{User.table_name}.id AND
+          #{sql_for_field(:name, matching_operator, value, emails, 'address')})
+      SQL
+
+      conditions = name_sql + [email_sql]
+      op = match ? " OR " : " AND "
+      "(#{conditions.map{|s| "(#{s})"}.join(op)})"
+    end
   end
 end

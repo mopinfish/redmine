@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -120,10 +120,10 @@ class WikiContentTest < ActiveSupport::TestCase
 
   def test_large_text_should_not_be_truncated_to_64k
     page = WikiPage.new(:wiki => @wiki, :title => "Big page")
-    page.content = WikiContent.new(:text => "a" * 500.kilobyte, :author => User.find(1))
+    page.content = WikiContent.new(:text => "a" * 500.kilobytes, :author => User.find(1))
     assert page.save
     page.reload
-    assert_equal 500.kilobyte, page.content.text.size
+    assert_equal 500.kilobytes, page.content.text.size
   end
 
   def test_current_version

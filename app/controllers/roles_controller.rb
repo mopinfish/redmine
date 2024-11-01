@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -63,7 +63,7 @@ class RolesController < ApplicationController
     @role.safe_attributes = params[:role]
     if request.post? && @role.save
       # workflow copy
-      if !params[:copy_workflow_from].blank? && (copy_from = Role.find_by_id(params[:copy_workflow_from]))
+      if params[:copy_workflow_from].present? && (copy_from = Role.find_by_id(params[:copy_workflow_from]))
         @role.copy_workflow_rules(copy_from)
       end
       flash[:notice] = l(:notice_successful_create)
@@ -85,12 +85,12 @@ class RolesController < ApplicationController
           flash[:notice] = l(:notice_successful_update)
           redirect_to roles_path(:page => params[:page])
         end
-        format.js {head 200}
+        format.js {head :ok}
       end
     else
       respond_to do |format|
         format.html {render :action => 'edit'}
-        format.js   {head 422}
+        format.js   {head :unprocessable_content}
       end
     end
   end

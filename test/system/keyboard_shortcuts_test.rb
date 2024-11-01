@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -90,7 +90,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
   end
 
   def test_keyboard_shortcuts_for_wiki_toolbar_buttons_using_markdown
-    with_settings :text_formatting => 'markdown' do
+    with_settings :text_formatting => 'common_mark' do
       log_user('jsmith', 'jsmith')
       visit 'issues/new'
 
@@ -100,7 +100,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
       # Clear textarea value
       fill_in 'Description', :with => ''
       find('#issue_description').send_keys([modifier_key, 'u'])
-      assert_equal '__', find('#issue_description').value
+      assert_equal '<u></u>', find('#issue_description').value
 
       # Clear textarea value
       fill_in 'Description', :with => ''
@@ -116,7 +116,8 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     within('.jstBlock .jstElements') do
       assert_equal "Strong (#{modifier_key_title}B)", find('button.jstb_strong')['title']
       assert_equal "Italic (#{modifier_key_title}I)", find('button.jstb_em')['title']
-      assert_equal "Underline (#{modifier_key_title}U)", find('button.jstb_ins')['title']
+      # assert button without shortcut
+      assert_equal "Deleted", find('button.jstb_del')['title']
     end
   end
 

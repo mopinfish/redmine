@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -310,7 +310,7 @@ class RepositoryTest < ActiveSupport::TestCase
         )
     long_whitespace = "                                                "
     expected_comment = "This is a loooooooooooooooooooooooooooong comment"
-    comment = +"#{expected_comment}#{long_whitespace}\n"
+    comment = "#{expected_comment}#{long_whitespace}\n"
     3.times {comment << "#{long_whitespace}\n"}
     changeset = Changeset.new(
       :comments => comment, :commit_date => Time.now,

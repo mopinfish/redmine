@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,7 +38,10 @@ module Redmine
 
           method_name = "macro_#{name}"
           unless macro_options[:parse_args] == false
-            args = args.split(',').map(&:strip)
+            # Split the arguments by commas, but only if the commas
+            # are not within double quotes
+            args = args.split(/\s*,\s*(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+                       .map {|i| i.gsub(/^"(.*)"$/, '\1').gsub('""', '"')}
           end
 
           begin
@@ -50,14 +53,14 @@ module Redmine
               send(method_name, obj, args)
             end
           rescue => e
-            %|<div class="flash error">#{t(:error_can_not_execute_macro_html, :name => name, :error => e.to_s)}</div>|.html_safe
+            %|<div class="flash error">#{::I18n.t(:error_can_not_execute_macro_html, :name => name, :error => e.to_s)}</div>|.html_safe
           end
         end
 
         def extract_macro_options(args, *keys)
           options = {}
           while args.last.to_s.strip =~ %r{^(.+?)\=(.+)$} && keys.include?($1.downcase.to_sym)
-            options[$1.downcase.to_sym] = $2
+            options[$1.downcase.to_sym] = $2.gsub(/^"(.*)"$/, '\1')
             args.pop
           end
           return [args, options]
@@ -245,10 +248,10 @@ module Redmine
         hide_label = args[1] || args[0] || l(:button_hide)
         js = "$('##{html_id}-show, ##{html_id}-hide').toggle(); $('##{html_id}').fadeToggle(150);"
         out = ''.html_safe
-        out << link_to_function(show_label, js, :id => "#{html_id}-show", :class => 'icon icon-collapsed collapsible')
+        out << link_to_function(sprite_icon('angle-right', show_label), js, :id => "#{html_id}-show", :class => 'icon icon-collapsed collapsible')
         out <<
           link_to_function(
-            hide_label, js,
+            sprite_icon('angle-down', hide_label), js,
             :id => "#{html_id}-hide",
             :class => 'icon icon-expanded collapsible',
             :style => 'display:none;'
@@ -281,7 +284,7 @@ module Redmine
 
         container = obj.is_a?(Journal) ? obj.journalized : obj
         attachments = container.attachments if container.respond_to?(:attachments)
-        if (controller_name == 'previews' || action_name == 'preview') && @attachments.present?
+        if (controller_path == 'previews' || action_name == 'preview') && @attachments.present?
           attachments = (attachments.to_a + @attachments).compact
         end
         if attachments.present? && (attachment = Attachment.latest_attach(attachments, filename))

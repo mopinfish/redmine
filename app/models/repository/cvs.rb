@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -52,14 +52,14 @@ class Repository::Cvs < Repository
 
   def scm_entries(path=nil, identifier=nil)
     rev = nil
-    if ! identifier.nil?
+    unless identifier.nil?
       rev = changesets.find_by_revision(identifier)
       return nil if rev.nil?
     end
     entries = scm.entries(path, rev.nil? ? nil : rev.committed_on)
     if entries
       entries.each do |entry|
-        if ( ! entry.lastrev.nil? ) && ( ! entry.lastrev.revision.nil? )
+        if (! entry.lastrev.nil?) && (! entry.lastrev.revision.nil?)
           change =
             filechanges.where(
               :revision => entry.lastrev.revision,
@@ -80,7 +80,7 @@ class Repository::Cvs < Repository
 
   def cat(path, identifier=nil)
     rev = nil
-    if ! identifier.nil?
+    unless identifier.nil?
       rev = changesets.find_by_revision(identifier)
       return nil if rev.nil?
     end
@@ -89,7 +89,7 @@ class Repository::Cvs < Repository
 
   def annotate(path, identifier=nil)
     rev = nil
-    if ! identifier.nil?
+    unless identifier.nil?
       rev = changesets.find_by_revision(identifier)
       return nil if rev.nil?
     end
@@ -204,7 +204,7 @@ class Repository::Cvs < Repository
   # Overrides Repository#validate_repository_path to validate
   # against root_url attribute.
   def validate_repository_path(attribute=:root_url)
-    super(attribute)
+    super
   end
 
   private

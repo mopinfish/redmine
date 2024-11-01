@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -150,6 +150,17 @@ class WikiControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_show_should_not_display_watchers_without_permission
+    @request.session[:user_id] = 2
+    Role.find(1).remove_permission! :view_wiki_page_watchers
+    page = Project.find(1).wiki.find_page('Another_page')
+    page.add_watcher User.find(2)
+    page.add_watcher Group.find(10)
+    get(:show, :params => {:project_id => 1, :id => 'Another_page'})
+    assert_select 'div#watchers ul', 0
+    assert_select 'h3', {text: /Watchers \(\d*\)/, count: 0}
+  end
+
   def test_show_should_display_section_edit_links
     with_settings :text_formatting => 'textile' do
       @request.session[:user_id] = 2
@@ -179,7 +190,7 @@ class WikiControllerTest < Redmine::ControllerTest
 
   def test_show_unexistent_page_without_edit_right
     get :show, :params => {:project_id => 1, :id => 'Unexistent page'}
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_show_unexistent_page_with_edit_right
@@ -191,7 +202,7 @@ class WikiControllerTest < Redmine::ControllerTest
 
   def test_show_specific_version_of_an_unexistent_page_without_edit_right
     get :show, :params => {:project_id => 1, :id => 'Unexistent page', :version => 1}
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_show_unexistent_page_with_parent_should_preselect_parent
@@ -204,14 +215,14 @@ class WikiControllerTest < Redmine::ControllerTest
   def test_show_unexistent_version_page
     @request.session[:user_id] = 2
     get :show, :params => {:project_id => 1, :id => 'CookBook_documentation', :version => 100}
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_show_should_not_show_history_without_permission
     Role.anonymous.remove_permission! :view_wiki_edits
     get :show, :params => {:project_id => 1, :id => 'Page with sections', :version => 2}
 
-    assert_response 302
+    assert_response :found
   end
 
   def test_show_page_without_content_should_display_the_edit_form
@@ -231,6 +242,20 @@ class WikiControllerTest < Redmine::ControllerTest
     assert_select 'p.wiki-update-info' do
       assert_select 'span.badge.badge-status-locked'
     end
+  end
+
+  def test_show_should_display_revisions_count
+    # To ensure that the number of versions is correctly displayed instead of
+    # the last version number of the wiki page, make a situation where the
+    # those two numbers are different.
+    content_versions = WikiContentVersion.where(page_id: 1)
+    content_versions.first.destroy
+    assert 3, content_versions.last.version
+    assert 2, content_versions.size
+
+    get :show, :params => {:project_id => 1, :id => 'CookBook_documentation'}
+    assert_response :success
+    assert_select 'a[href=?]', '/projects/1/wiki/CookBook_documentation/history', :text => /2 revisions/
   end
 
   def test_get_new
@@ -386,7 +411,7 @@ class WikiControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     get :edit, :params => {:project_id => 'ecookbook', :id => 'Page_with_sections', :section => 10}
 
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_update_page
@@ -598,7 +623,7 @@ class WikiControllerTest < Redmine::ControllerTest
           :id => 'NoContent',
           :content => {:text => 'Some content'}
         }
-        assert_response 302
+        assert_response :found
       end
     end
     assert_equal 'Some content', page.reload.content.text
@@ -677,7 +702,7 @@ class WikiControllerTest < Redmine::ControllerTest
               :version => 3
             },
             :section => 2,
-            :section_hash => Digest::MD5.hexdigest("wrong hash")
+            :section_hash => ActiveSupport::Digest.hexdigest("wrong hash")
           }
         end
       end
@@ -780,7 +805,7 @@ class WikiControllerTest < Redmine::ControllerTest
       :project_id => 1, :id => 'CookBook_documentation',
       :version => '99'
     }
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_diff_with_invalid_version_from_should_respond_with_404
@@ -789,7 +814,7 @@ class WikiControllerTest < Redmine::ControllerTest
       :version => '99',
       :version_from => '98'
     }
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_annotate
@@ -825,7 +850,7 @@ class WikiControllerTest < Redmine::ControllerTest
       :project_id => 1, :id => 'CookBook_documentation',
       :version => '99'
     }
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_get_rename
@@ -1040,7 +1065,7 @@ class WikiControllerTest < Redmine::ControllerTest
         end
       end
     end
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_index
@@ -1097,7 +1122,7 @@ class WikiControllerTest < Redmine::ControllerTest
     Role.find_by_name('Manager').remove_permission! :export_wiki_pages
     get :export, :params => {:project_id => 'ecookbook'}
 
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_date_index
@@ -1110,7 +1135,7 @@ class WikiControllerTest < Redmine::ControllerTest
 
   def test_not_found
     get :show, :params => {:project_id => 999}
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_protect_page
@@ -1237,7 +1262,7 @@ class WikiControllerTest < Redmine::ControllerTest
     # Non members cannot edit protected wiki pages
     @request.session[:user_id] = 4
     get :edit, :params => {:project_id => 1, :id => 'CookBook_documentation'}
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_edit_protected_page_by_member
@@ -1248,7 +1273,7 @@ class WikiControllerTest < Redmine::ControllerTest
 
   def test_history_of_non_existing_page_should_return_404
     get :history, :params => {:project_id => 1, :id => 'Unknown_page'}
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_add_attachment

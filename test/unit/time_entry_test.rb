@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -87,11 +87,25 @@ class TimeEntryTest < ActiveSupport::TestCase
       "3 hours"  => 3.0,
       "12min"    => 0.2,
       "12 Min"    => 0.2,
+      "0:23"   => Rational(23, 60), # 0.38333333333333336
+      "0.9913888888888889" => Rational(59, 60), # 59m 29s is rounded to 59m
+      "0.9919444444444444" => 1     # 59m 30s is rounded to 60m
     }
     assertions.each do |k, v|
       t = TimeEntry.new(:hours => k)
-      assert_equal v, t.hours, "Converting #{k} failed:"
+      assert v == t.hours && t.hours.is_a?(Rational), "Converting #{k} failed:"
     end
+  end
+
+  def test_hours_sum_precision
+    # The sum of 10, 10, and 40 minutes should be 1 hour, but in older
+    # versions of Redmine, the result was 1.01 hours. This was because
+    # TimeEntry#hours was a float value rounded to 2 decimal places.
+    #  [0.17, 0.17, 0.67].sum => 1.01
+
+    hours = %w[10m 10m 40m].map {|m| TimeEntry.new(hours: m).hours}
+    assert_equal 1, hours.sum
+    hours.map {|h| assert h.is_a?(Rational)}
   end
 
   def test_hours_should_default_to_nil
@@ -141,7 +155,7 @@ class TimeEntryTest < ActiveSupport::TestCase
 
   def test_activity_id_should_be_set_automatically_if_there_is_only_one_activity_available
     project = Project.find(1)
-    TimeEntry.all.destroy_all
+    TimeEntry.destroy_all
     TimeEntryActivity.destroy_all
     only_one_activity = TimeEntryActivity.create!(
       name: 'Development',
@@ -168,6 +182,16 @@ class TimeEntryTest < ActiveSupport::TestCase
 
       assert !entry.save
       assert entry.errors[:base].present?
+    end
+  end
+
+  def test_should_require_spent_on
+    with_settings :timelog_accept_future_dates => '0' do
+      entry = TimeEntry.find(1)
+      entry.spent_on = ''
+
+      assert !entry.save
+      assert entry.errors[:spent_on].present?
     end
   end
 
@@ -211,7 +235,7 @@ class TimeEntryTest < ActiveSupport::TestCase
     anon     = User.anonymous
     project  = Project.find(1)
     issue    = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => anon.id, :status_id => 1,
-                         :priority => IssuePriority.all.first, :subject => 'test_create',
+                         :priority => IssuePriority.first, :subject => 'test_create',
                          :description => 'IssueTest#test_create', :estimated_hours => '1:30')
     assert issue.save
     activity = TimeEntryActivity.find_by_name('Design')
@@ -229,14 +253,14 @@ class TimeEntryTest < ActiveSupport::TestCase
     activity = TimeEntryActivity.create!(:name => 'Other project activity', :project_id => 2, :active => true)
 
     entry = TimeEntry.new(:spent_on => Date.today, :hours => 1.0, :user => User.find(1), :project_id => 1, :activity => activity)
-    assert !entry.valid?
+    assert entry.invalid?
     assert_include I18n.translate('activerecord.errors.messages.inclusion'), entry.errors[:activity_id]
   end
 
   def test_spent_on_with_2_digits_year_should_not_be_valid
     entry = TimeEntry.new(:project => Project.find(1), :user => User.find(1), :activity => TimeEntryActivity.first, :hours => 1)
     entry.spent_on = "09-02-04"
-    assert !entry.valid?
+    assert entry.invalid?
     assert_include I18n.translate('activerecord.errors.messages.not_a_date'), entry.errors[:spent_on]
   end
 
@@ -244,7 +268,7 @@ class TimeEntryTest < ActiveSupport::TestCase
     anon     = User.anonymous
     project  = Project.find(1)
     issue    = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => anon.id, :status_id => 1,
-                         :priority => IssuePriority.all.first, :subject => 'test_create',
+                         :priority => IssuePriority.first, :subject => 'test_create',
                          :description => 'IssueTest#test_create', :estimated_hours => '1:30')
     assert issue.save
     activity = TimeEntryActivity.find_by_name('Design')

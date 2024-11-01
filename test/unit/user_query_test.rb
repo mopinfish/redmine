@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -108,6 +108,29 @@ class UserQueryTest < ActiveSupport::TestCase
     end
   end
 
+  def test_name_or_email_or_login_filter
+    [
+      ['~', 'jsmith', [2]],
+      ['^', 'jsm', [2]],
+      ['$', 'ith', [2]],
+      ['~', 'john', [2]],
+      ['~', 'smith', [2]],
+      ['~', 'somenet', [1, 2, 3, 4]],
+      ['!~', 'somenet', [7, 8, 9]],
+      ['^', 'dlop', [3]],
+      ['$', 'bar', [7, 8, 9]],
+      ['=', 'bar', []],
+      ['=', 'someone@foo.bar', [7]],
+      ['*', '', [1, 2, 3, 4, 7, 8, 9]],
+      ['!*', '', []],
+    ].each do |op, string, result|
+      q = UserQuery.new name: '_'
+      q.add_filter('name', op, [string])
+      users = find_users_with_query q
+      assert_equal result, users.map(&:id).sort, "#{op} #{string} should have found #{result}"
+    end
+  end
+
   def test_group_filter
     q = UserQuery.new name: '_'
     q.add_filter('is_member_of_group', '=', ['10', '99'])
@@ -186,7 +209,7 @@ class UserQueryTest < ActiveSupport::TestCase
     users = q.results_scope
 
     assert_equal 2, users.size
-    assert_equal [2, 1], users.ids
+    assert_equal [2, 1], users.pluck(:id)
   end
 
   def find_users_with_query(query)

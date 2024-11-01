@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-require 'digest/md5'
 
 module Redmine
   module WikiFormatting
@@ -97,13 +95,13 @@ module Redmine
 
         # Patch for RedCloth.  Fixed in RedCloth r128 but _why hasn't released it yet.
         # <a href="http://code.whytheluckystiff.net/redcloth/changeset/128">http://code.whytheluckystiff.net/redcloth/changeset/128</a>
-        def hard_break( text )
-          text.gsub!( /(.)\n(?!\n|\Z| *([#*=]+(\s|$)|[{|]))/, "\\1<br />" ) if hard_breaks
+        def hard_break(text)
+          text.gsub!(/(.)\n(?!\n|\Z| *([#*=]+(\s|$)|[{|]))/, "\\1<br />") if hard_breaks
         end
 
         alias :smooth_offtags_without_code_highlighting :smooth_offtags
         # Patch to add code highlighting support to RedCloth
-        def smooth_offtags( text )
+        def smooth_offtags(text)
           unless @pre_list.empty?
             ## replace <pre> content
             text.gsub!(/<redpre#(\d+)>/) do
@@ -115,7 +113,7 @@ module Redmine
                 # original language for extension development
                 langattr = " data-language=\"#{CGI.escapeHTML language}\"" if language.present?
                 if Redmine::SyntaxHighlighting.language_supported?(language)
-                  text.gsub!(/x%x%/, '&')
+                  text.gsub!("x%x%", '&')
                   content = "<code class=\"#{CGI.escapeHTML language} syntaxhl\"#{langattr}>" +
                     Redmine::SyntaxHighlighting.highlight_by_language(text, language)
                 else

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -153,10 +153,6 @@ class GroupsController < ApplicationController
   end
 
   def user_count_by_group_id
-    h = User.joins(:groups).group('group_id').count
-    h.keys.each do |key|
-      h[key.to_i] = h.delete(key)
-    end
-    h
+    User.joins(:groups).group(:group_id).count.transform_keys(&:to_i)
   end
 end

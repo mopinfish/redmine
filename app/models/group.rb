@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -47,16 +47,10 @@ class Group < Principal
     'custom_fields',
     :if => lambda {|group, user| user.admin? && !group.builtin?})
 
+  alias_attribute :name, :lastname
+
   def to_s
     name.to_s
-  end
-
-  def name
-    lastname
-  end
-
-  def name=(arg)
-    self.lastname = arg
   end
 
   def builtin_type
@@ -80,6 +74,8 @@ class Group < Principal
   def user_added(user)
     members.preload(:member_roles).each do |member|
       next if member.project_id.nil?
+      # skip if the group is a member without roles in the project
+      next if member.member_roles.empty?
 
       user_member =
         Member.find_or_initialize_by(:project_id => member.project_id, :user_id => user.id)

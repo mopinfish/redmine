@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -66,8 +66,8 @@ class TimelogController < ApplicationController
       end
       format.csv do
         # Export all entries
-        @entries = scope.to_a
-        send_data(query_to_csv(@entries, @query, params), :type => 'text/csv; header=present', :filename => "#{filename_for_export(@query, 'timelog')}.csv")
+        entries = scope.to_a
+        send_data(query_to_csv(entries, @query, params), :type => 'text/csv; header=present', :filename => "#{filename_for_export(@query, 'timelog')}.csv")
       end
     end
   end
@@ -90,7 +90,7 @@ class TimelogController < ApplicationController
   def show
     respond_to do |format|
       # TODO: Implement html response
-      format.html {head 406}
+      format.html {head :not_acceptable}
       format.api
     end
   end

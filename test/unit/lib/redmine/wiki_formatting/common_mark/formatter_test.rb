@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -207,6 +207,21 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
       assert_section_with_hash STR_WITH_PRE[2], text, 3
     end
 
+    def test_get_section_should_not_recognize_double_hash_issue_reference_as_heading
+      text = <<~STR
+        ## Section A
+
+        This text is a part of Section A.
+
+        ##1 : This is an issue reference, not an ATX heading.
+
+        This text is also a part of Section A.
+        <!-- Section A ends here -->
+      STR
+
+      assert_section_with_hash text.chomp, text, 1
+    end
+
     def test_update_section_should_not_escape_pre_content_outside_section
       text = STR_WITH_PRE.join("\n\n")
       replacement = "New text"
@@ -292,7 +307,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
       assert_kind_of Array, result
       assert_equal 2, result.size
       assert_equal expected, result.first, "section content did not match"
-      assert_equal Digest::MD5.hexdigest(expected), result.last, "section hash did not match"
+      assert_equal ActiveSupport::Digest.hexdigest(expected), result.last, "section hash did not match"
     end
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -109,7 +109,7 @@ class Redmine::VersionFieldFormatTest < ActionView::TestCase
   def test_cast_value_should_not_raise_error_when_array_contains_value_casted_to_nil
     field = IssueCustomField.new(:field_format => 'version')
     assert_nothing_raised do
-      field.cast_value([1,2, 42])
+      field.cast_value([1, 2, 42])
     end
   end
 

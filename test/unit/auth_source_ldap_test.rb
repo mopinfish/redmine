@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -75,7 +75,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
 
     a = AuthSourceLdap.new(:name => 'My LDAP', :host => 'ldap.example.net', :port => 389, :attr_login => 'sn')
     a.filter = "(mail=*@redmine.org"
-    assert !a.valid?
+    assert a.invalid?
     assert_include "LDAP filter is invalid", a.errors.full_messages
 
     a.filter = "(mail=*@redmine.org)"
@@ -129,8 +129,8 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
       assert_equal 'One', attributes[:lastname]
       assert_equal 'example1@redmine.org', attributes[:mail]
       assert_equal auth.id, attributes[:auth_source_id]
-      attributes.keys.each do |attribute|
-        assert User.new.respond_to?("#{attribute}="), "Unexpected :#{attribute} attribute returned"
+      attributes.each_key do |attribute|
+        assert User.new.respond_to?(:"#{attribute}="), "Unexpected :#{attribute} attribute returned"
       end
     end
 

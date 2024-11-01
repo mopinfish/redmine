@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ class TimelogTest < ApplicationSystemTestCase
     end
     within 'select#time_entry_activity_id' do
       assert has_content?('Development')
-      assert !has_content?('Design')
+      assert has_no_content?('Design')
     end
   end
 
@@ -54,7 +54,7 @@ class TimelogTest < ApplicationSystemTestCase
     select 'QA', :from => 'Activity'
     page.first(:button, 'Submit').click
 
-    entries = TimeEntry.where(:id => [1,2,3]).to_a
+    entries = TimeEntry.where(:id => [1, 2, 3]).to_a
     assert entries.all? {|entry| entry.hours == 8.5}
     assert entries.all? {|entry| entry.activity.name == 'QA'}
   end
@@ -69,8 +69,8 @@ class TimelogTest < ApplicationSystemTestCase
     fill_in 'Hours', :with => '7'
     page.first(:button, 'Submit').click
 
-    assert_equal "/projects/ecookbook/time_entries", current_path
-    entries = TimeEntry.where(:id => [1,2,3]).to_a
+    assert_current_path "/projects/ecookbook/time_entries"
+    entries = TimeEntry.where(:id => [1, 2, 3]).to_a
     assert entries.all? {|entry| entry.hours == 7.0}
   end
 

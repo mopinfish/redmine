@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -97,7 +97,7 @@ class AccountTest < Redmine::IntegrationTest
             :autologin => 1
           }
         )
-        assert_response 302
+        assert_response :found
       end
       assert cookies['custom_autologin'].present?
       token = cookies['custom_autologin']
@@ -293,7 +293,6 @@ class AccountTest < Redmine::IntegrationTest
 
       assert_equal false, User.find_by_login('jsmith').must_change_passwd?
     end
-
   end
 
   def test_register_with_automatic_activation

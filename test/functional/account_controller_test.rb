@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -230,7 +230,7 @@ class AccountControllerTest < Redmine::ControllerTest
         :password => 'jsmith'
       }
     )
-    assert_response 500
+    assert_response :internal_server_error
     assert_select_error /Something wrong/
   end
 
@@ -243,7 +243,7 @@ class AccountControllerTest < Redmine::ControllerTest
         :password => 'jsmith'
       }
     )
-    assert_response 302
+    assert_response :found
   end
 
   def test_login_should_strip_whitespaces_from_user_name
@@ -254,7 +254,7 @@ class AccountControllerTest < Redmine::ControllerTest
         :password => 'jsmith'
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal 2, @request.session[:user_id]
   end
 
@@ -283,7 +283,7 @@ class AccountControllerTest < Redmine::ControllerTest
 
     @request.session[:user_id] = 2
     post :logout
-    assert_response 302
+    assert_response :found
   end
 
   def test_get_register_with_registration_on

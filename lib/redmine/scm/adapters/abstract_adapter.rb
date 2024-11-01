@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -72,9 +72,10 @@ module Redmine
         def initialize(url, root_url=nil, login=nil, password=nil,
                        path_encoding=nil)
           @url = url
-          @login = login if login && !login.empty?
+          @login = login if login.present?
           @password = (password || "") if @login
-          @root_url = root_url.blank? ? retrieve_root_url : root_url
+          @root_url = root_url.presence || retrieve_root_url
+          @path_encoding = path_encoding.presence || 'UTF-8'
         end
 
         def adapter_name
@@ -166,12 +167,6 @@ module Redmine
           path.end_with?('/') ? path : "#{path}/"
         end
 
-        def with_trailling_slash(path)
-          ActiveSupport::Deprecation.warn 'Redmine::Scm::Adapters::AbstractAdapter#with_trailling_slash is ' \
-           'deprecated and will be removed in Redmine 6.0. Please use #with_trailing_slash instead.'
-          with_trailing_slash(path)
-        end
-
         def without_leading_slash(path)
           path ||= ''
           path.gsub(%r{^/+}, '')
@@ -180,12 +175,6 @@ module Redmine
         def without_trailing_slash(path)
           path ||= ''
           path.end_with?('/') ? path[0..-2] : path
-        end
-
-        def without_trailling_slash(path)
-          ActiveSupport::Deprecation.warn 'Redmine::Scm::Adapters::AbstractAdapter#without_trailling_slash is ' \
-          'deprecated and will be removed in Redmine 6.0. Please use #without_trailing_slash instead.'
-          without_trailing_slash(path)
         end
 
         def valid_name?(name)
@@ -205,7 +194,7 @@ module Redmine
 
         def target(path, sq=true)
           path ||= ''
-          base = /^\//.match?(path) ? root_url : url
+          base = path.start_with?('/') ? root_url : url
           str = "#{base}/#{path}".gsub(/[?<>\*]/, '')
           if sq
             str = shell_quote(str)
@@ -217,8 +206,8 @@ module Redmine
           self.class.logger
         end
 
-        def shellout(cmd, options = {}, &block)
-          self.class.shellout(cmd, options, &block)
+        def shellout(cmd, options = {}, &)
+          self.class.shellout(cmd, options, &)
         end
 
         # Path to the file where scm stderr output is logged
@@ -422,16 +411,18 @@ module Redmine
       end
 
       class Annotate
-        attr_reader :lines, :revisions
+        attr_reader :lines, :revisions, :previous_annotations
 
         def initialize
           @lines = []
           @revisions = []
+          @previous_annotations = []
         end
 
-        def add_line(line, revision)
+        def add_line(line, revision, previous=nil)
           @lines << line
           @revisions << revision
+          @previous_annotations << previous
         end
 
         def content
@@ -450,7 +441,7 @@ module Redmine
       module ScmData
         def self.binary?(data)
           unless data.empty?
-            data.count("^ -~", "^\r\n").fdiv(data.size) > 0.3 || data.index("\x00")
+            data.index("\x00") || data.count("\x00-\x1f\x7f", "^\t\r\n").fdiv(data.size) > 0.1
           end
         end
       end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -207,7 +207,7 @@ class MembersControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     member = Member.find(2)
     assert member.user.locked?
     assert_equal [1], member.role_ids

@@ -194,6 +194,7 @@
         must_contain_digits: "必須包含數字 (0-9)"
         must_contain_special_chars: "必須包含特殊字元 (!, $, %, ...)"
         domain_not_allowed: "包含不允許的網域 (%{domain})"
+        too_simple: "is too simple"
 
       # You can define own errors for models or model attributes.
       # The values :model, :attribute and :value are always available for interpolation.
@@ -697,7 +698,6 @@
   label_reported_issues: 我通報的議題
   label_assigned_issues: 我被分派的議題
   label_assigned_to_me_issues: 分派給我的議題
-  label_last_login: 最近一次連線
   label_registered_on: 註冊於
   label_activity: 活動
   label_user_activity: "%{value} 的活動"
@@ -837,7 +837,6 @@
   label_repository: 儲存機制
   label_repository_new: 建立新儲存機制
   label_repository_plural: 儲存機制清單
-  label_browse: 瀏覽
   label_branch: 分支
   label_tag: 標籤
   label_revision: 修訂版
@@ -1320,7 +1319,7 @@
   label_trackers_description: 追蹤標籤說明
   label_open_trackers_description: 檢視所有追蹤標籤的說明
   label_preferred_body_part_text: 純文字
-  label_preferred_body_part_html: HTML (實驗性)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: 父議題主旨
   permission_edit_own_issues: 編輯自己的議題
   text_select_apply_tracker: 選擇追蹤標籤
@@ -1332,7 +1331,6 @@
   text_gs_available: 可使用 ImageMagick 轉換 PDF 格式 (選配)
   field_recently_used_projects: 跳轉下拉方塊中最近用過的專案數目
   label_optgroup_bookmarks: 書籤
-  label_optgroup_others: 其他專案
   label_optgroup_recents: 最近用過的
   button_project_bookmark: 新增書籤
   button_project_bookmark_delete: 移除書籤
@@ -1492,3 +1490,28 @@
     此動作無法復原。鎖定用戶經常是一個比刪除用戶還要來得更好的解決方案。
   text_users_bulk_destroy_confirm: 請於下方輸入 "%{yes}" 以便確認。
   permission_select_project_publicity: 設定專案為公開或私人
+  label_auto_watch_on_issue_created: 我所建立的議題
+  field_any_searchable: 任何可搜尋的文字
+  label_contains_any_of: 包含任何(任一個字)
+  button_apply_issues_filter: 套用議題篩選條件
+  label_view_previous_annotation: 檢視此變更之前的註釋
+  label_has_been: 曾經是
+  label_has_never_been: 未曾是
+  label_changed_from: 前一個是
+  label_issue_statuses_description: 議題狀態說明
+  label_open_issue_statuses_description: 檢視所有議題狀態的說明
+  text_select_apply_issue_status: 選擇議題狀態
+  field_name_or_email_or_login: 姓名, 電子郵件或帳戶名稱
+  text_default_active_job_queue_changed: 已變更僅適用於開發/測試環境的佇列適配器 (queue adapter)
+  label_option_auto_lang: 自動選取語言
+  label_issue_attachment_added: 附加檔案已新增
+  field_estimated_remaining_hours: 預估剩餘工時
+  field_last_activity_date: 最近一次活動
+  setting_issue_done_ratio_interval: 完成百分比選項的間隔值
+  setting_copy_attachments_on_issue_copy: 連同附件檔案一起複製
+  field_thousands_delimiter: 千分位分隔符號
+  label_involved_principals: 作者 / 歷任被分派者
+  label_attachment_summary:
+    zero: "%{filename}"
+    one: "%{filename} 與另 1 個檔案"
+    other: "%{filename} 與另外 %{count} 個檔案"

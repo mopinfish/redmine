@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -84,7 +84,7 @@ module TimelogHelper
           "##{obj.id}"
         end
       else
-        format_object(obj, html)
+        format_object(obj, html: html)
       end
     elsif cf = criteria_options[:custom_field]
       format_value(value, cf)
@@ -146,5 +146,4 @@ module TimelogHelper
     fallback_path = project ? project_time_entries_path(project) : time_entries_path
     cancel_button_tag(fallback_path)
   end
-
 end

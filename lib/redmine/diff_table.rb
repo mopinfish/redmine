@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,6 +25,7 @@ module Redmine
     # Initialize with a Diff file and the type of Diff View
     # The type view must be inline or sbs (side_by_side)
     def initialize(type="inline", style=nil)
+      super()
       @parsing = false
       @added = 0
       @removed = 0
@@ -90,12 +91,12 @@ module Redmine
       if both_git_diff
         if file_name && arg == "/dev/null"
           # keep the original file name
-          @file_name = file_name.sub(%r{^a/}, '')
+          @file_name = file_name.delete_prefix('a/')
         else
           # remove leading a/
-          @previous_file_name = file_name.sub(%r{^a/}, '') unless file_name == "/dev/null"
+          @previous_file_name = file_name.delete_prefix('a/') unless file_name == "/dev/null"
           # remove leading b/
-          @file_name = arg.sub(%r{^b/}, '')
+          @file_name = arg.delete_prefix('b/')
 
           @previous_file_name = nil if @previous_file_name == @file_name
         end

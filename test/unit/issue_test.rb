@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -58,7 +58,7 @@ class IssueTest < ActiveSupport::TestCase
 
   def test_create
     issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => 3,
-                      :status_id => 1, :priority => IssuePriority.all.first,
+                      :status_id => 1, :priority => IssuePriority.first,
                       :subject => 'test_create',
                       :description => 'IssueTest#test_create', :estimated_hours => '1:30')
     assert issue.save
@@ -81,6 +81,26 @@ class IssueTest < ActiveSupport::TestCase
 
     issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => 3, :subject => 'test_create_with_all_fields_disabled')
     assert_save issue
+  end
+
+  def test_create_with_no_priority_defined
+    IssuePriority.delete_all
+    issue = Issue.new(
+      project_id: 1, tracker_id: 1, author_id: 3, subject: 'test_create_with_no_priority_defined'
+    )
+
+    assert_nothing_raised {assert_not issue.save}
+    assert_include 'Priority cannot be blank', issue.errors.full_messages
+  end
+
+  def test_default_priority_should_be_set_when_priority_field_is_disabled
+    tracker = Tracker.find(1)
+    tracker.core_fields = tracker.core_fields - ['priority_id']
+    tracker.save!
+
+    issue = Issue.new(:project_id => 1, :tracker_id => tracker.id, :author_id => 1, :subject => 'priority_id is disabled')
+    issue.save!
+    assert_equal IssuePriority.default, issue.priority
   end
 
   def test_start_date_format_should_be_validated
@@ -365,7 +385,7 @@ class IssueTest < ActiveSupport::TestCase
 
     with_settings :issue_group_assignment => '1' do
       issue = Issue.create!(:project_id => 1, :tracker_id => 1, :author_id => 3,
-        :status_id => 1, :priority => IssuePriority.all.first,
+        :status_id => 1, :priority => IssuePriority.first,
         :subject => 'Assignment test',
         :assigned_to => group,
         :is_private => true)
@@ -697,9 +717,6 @@ class IssueTest < ActiveSupport::TestCase
     issue.expects(:project_id=).in_sequence(seq)
     issue.expects(:tracker_id=).in_sequence(seq)
     issue.expects(:subject=).in_sequence(seq)
-    assert_raise Exception do
-      issue.attributes = {:subject => 'Test'}
-    end
     assert_nothing_raised do
       issue.attributes = {:tracker_id => 2, :project_id => 1, :subject => 'Test'}
     end
@@ -788,7 +805,7 @@ class IssueTest < ActiveSupport::TestCase
 
   def test_category_based_assignment
     issue = Issue.create(:project_id => 1, :tracker_id => 1, :author_id => 3,
-                         :status_id => 1, :priority => IssuePriority.all.first,
+                         :status_id => 1, :priority => IssuePriority.first,
                          :subject => 'Assignment test',
                          :description => 'Assignment test', :category_id => 1)
     assert_equal IssueCategory.find(1).assigned_to, issue.assigned_to
@@ -1481,11 +1498,31 @@ class IssueTest < ActiveSupport::TestCase
     user2 = User.find(3)
     issue = Issue.find(8)
 
+    User.current = user
+
     Watcher.create!(:user => user, :watchable => issue)
     Watcher.create!(:user => user2, :watchable => issue)
 
     user2.status = User::STATUS_LOCKED
     user2.save!
+
+    issue = Issue.new.copy_from(8)
+
+    assert issue.save
+    assert issue.watched_by?(user)
+    assert !issue.watched_by?(user2)
+  end
+
+  def test_copy_should_not_copy_watchers_without_permission
+    user = User.find(2)
+    user2 = User.find(3)
+    issue = Issue.find(8)
+
+    Role.find(1).remove_permission! :view_issue_watchers
+    User.current = user
+
+    Watcher.create!(:user => user, :watchable => issue)
+    Watcher.create!(:user => user2, :watchable => issue)
 
     issue = Issue.new.copy_from(8)
 
@@ -2153,6 +2190,28 @@ class IssueTest < ActiveSupport::TestCase
     end
   end
 
+  def test_destroy_should_delete_attachments_on_custom_values
+    cf = IssueCustomField.create!(:name => 'Attachable field', :field_format => 'attachment', :is_for_all => true, :tracker_ids => [1])
+    user = User.find(2)
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :subject => 'test', :author_id => user.id)
+    attachment = Attachment.create!(:container => issue, :file => uploaded_test_file('testfile.txt', 'text/plain'), :author_id => user.id)
+    issue.send(
+      :safe_attributes=,
+      {
+        'custom_fields' =>
+          [
+            {'id' => cf.id.to_s, 'value' => attachment.id.to_s},
+          ]
+      }, user
+    )
+
+    assert_difference 'CustomValue.where(:customized_type => "Issue").count', -(issue.custom_values.count) do
+      assert_difference 'Attachment.count', -1 do
+        issue.destroy
+      end
+    end
+  end
+
   def test_destroying_a_deleted_issue_should_not_raise_an_error
     issue = Issue.find(1)
     Issue.find(1).destroy
@@ -2183,6 +2242,16 @@ class IssueTest < ActiveSupport::TestCase
 
     assert blocked_issue.blocked?
     assert !blocking_issue.blocked?
+  end
+
+  def test_blocked_should_not_raise_exception_when_blocking_issue_id_is_invalid
+    ir = IssueRelation.find_by(issue_from_id: 10, issue_to_id: 9, relation_type: 'blocks')
+    issue = Issue.find(9)
+    assert issue.blocked?
+
+    ir.update_column :issue_from_id, 0  # invalid issue id
+    issue.reload
+    assert_nothing_raised {assert_not issue.blocked?}
   end
 
   def test_blocked_issues_dont_allow_closed_statuses
@@ -2225,7 +2294,7 @@ class IssueTest < ActiveSupport::TestCase
     assert parent.closable?
     assert_nil parent.transition_warning
     assert allowed_statuses.any?
-    assert allowed_statuses.select(&:is_closed?).any?
+    assert allowed_statuses.any?(&:is_closed?)
   end
 
   def test_reschedule_an_issue_without_dates
@@ -2680,7 +2749,7 @@ class IssueTest < ActiveSupport::TestCase
     ActionMailer::Base.deliveries.clear
     issue = Issue.new(:project_id => 1, :tracker_id => 1,
                       :author_id => 3, :status_id => 1,
-                      :priority => IssuePriority.all.first,
+                      :priority => IssuePriority.first,
                       :subject => 'test_create', :estimated_hours => '1:30')
     with_settings :notified_events => %w(issue_added) do
       assert issue.save
@@ -2692,7 +2761,7 @@ class IssueTest < ActiveSupport::TestCase
     ActionMailer::Base.deliveries.clear
     issue = Issue.new(:project_id => 1, :tracker_id => 1,
                       :author_id => 3, :status_id => 1,
-                      :priority => IssuePriority.all.first,
+                      :priority => IssuePriority.first,
                       :subject => 'test_create', :estimated_hours => '1:30')
     with_settings :notified_events => %w(issue_added issue_updated) do
       assert issue.save
@@ -2704,7 +2773,7 @@ class IssueTest < ActiveSupport::TestCase
     ActionMailer::Base.deliveries.clear
     issue = Issue.new(:project_id => 1, :tracker_id => 1,
                       :author_id => 3, :status_id => 1,
-                      :priority => IssuePriority.all.first,
+                      :priority => IssuePriority.first,
                       :subject => 'test_create', :estimated_hours => '1:30')
     with_settings :notified_events => [] do
       assert issue.save
@@ -3007,7 +3076,7 @@ class IssueTest < ActiveSupport::TestCase
   end
 
   test "Issue#recipients should include the author if the author is active" do
-    issue = Issue.generate!(:author => User.generate!)
+    issue = Issue.generate!(:author => User.generate!(:mail_notification => 'only_my_events'))
     assert issue.author, "No author set for Issue"
     assert issue.recipients.include?(issue.author.mail)
   end
@@ -3210,6 +3279,15 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal was_closed_on, issue.closed_on
   end
 
+  def test_prior_assigned_to
+    issue = Issue.generate!(assigned_to_id: 2)
+    issue.init_journal(User.find(2), 'update')
+    issue.assigned_to_id = 3
+    issue.save
+
+    assert_equal User.find(2), issue.prior_assigned_to
+  end
+
   def test_status_was_should_return_nil_for_new_issue
     issue = Issue.new
     assert_nil issue.status_was
@@ -3383,7 +3461,7 @@ class IssueTest < ActiveSupport::TestCase
     user_in_europe.pref.update! :time_zone => 'UTC'
 
     user_in_asia = users(:users_002)
-    user_in_asia.pref.update! :time_zone => 'Hongkong'
+    user_in_asia.pref.update! :time_zone => 'Asia/Hong_Kong'
 
     issue = Issue.generate! :due_date => Date.parse('2016-03-20')
 
@@ -3443,6 +3521,90 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [5, 6], issue2.filter_projects_scope('descendants').ids.sort
 
     assert_equal [5], issue2.filter_projects_scope('').ids.sort
+  end
+
+  def test_create_should_add_watcher
+    user = User.first
+    user.pref.auto_watch_on=['issue_created']
+    user.pref.save
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => user.id, :subject => 'test_create_should_add_watcher')
+
+    assert_difference 'Watcher.count', 1 do
+      assert_equal true, issue.save
+    end
+  end
+
+  def test_create_should_add_author_watcher_only_once
+    user = User.first
+    user.pref.auto_watch_on=['issue_created']
+    user.pref.save
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => user.id, :subject => 'test_create_should_add_watcher')
+    issue.watcher_user_ids = [user.id]
+
+    assert_difference 'Watcher.count', 1 do
+      assert_equal true, issue.save
+    end
+  end
+
+  def test_create_should_not_add_watcher
+    user = User.first
+    user.pref.auto_watch_on=[]
+    user.pref.save
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => user.id, :subject => 'test_create_should_not_add_watcher')
+
+    assert_no_difference 'Watcher.count' do
+      assert_equal true, issue.save
+    end
+  end
+
+  def test_change_of_project_parent_should_update_shared_versions_with_derived_priorities
+    with_settings('parent_issue_priority' => 'derived') do
+      parent = Project.find 1
+      child = Project.find 3
+      assert_equal parent, child.parent
+      assert version = parent.versions.create(name: 'test', sharing: 'descendants')
+      assert version.persisted?
+      assert child.shared_versions.include?(version)
+
+      # create a situation where the child issue id is lower than the parent issue id.
+      # When the parent project is removed, the version inherited from there will be removed from
+      # both issues. At least on MySQL the record with the lower Id will be processed first.
+      #
+      # If this update on the child triggers an update on the parent record (here, due to the derived
+      # priority), the already loaded parent issue is considered stale when it's version is updated.
+      assert child_issue = child.issues.first
+      parent_issue = Issue.create! project: child, subject: 'test', tracker: child_issue.tracker, author: child_issue.author, status: child_issue.status, fixed_version: version
+      assert child_issue.update fixed_version: version, priority_id: 6, parent: parent_issue
+      parent_issue.update_column :priority_id, 4 # force a priority update when the version is nullified
+
+      assert child.update parent: nil
+
+      child.reload
+      assert !child.shared_versions.include?(version)
+
+      child_issue.reload
+      assert_nil child_issue.fixed_version
+      assert_equal 6, child_issue.priority_id
+
+      parent_issue.reload
+      assert_nil parent_issue.fixed_version
+      assert_equal 6, parent_issue.priority_id
+    end
+  end
+
+  def test_create_should_not_add_anonymous_as_watcher
+    Role.anonymous.add_permission!(:add_issue_watchers)
+
+    user = User.anonymous
+    assert user.pref.auto_watch_on?('issue_contributed_to')
+
+    journal = Journal.new(:journalized => Issue.first, :notes => 'notes', :user => user)
+
+    assert_no_difference 'Watcher.count' do
+      assert journal.save
+      assert journal.valid?
+      assert journal.journalized.valid?
+    end
   end
 
   def test_like_should_escape_query

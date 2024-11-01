@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,6 @@
 require_relative '../../test_helper'
 
 class Redmine::ApiTest::ApiRoutingTest < Redmine::ApiTest::Routing
-
   def test_attachments
     should_route 'GET /attachments/1' => 'attachments#show', :id => '1'
     should_route 'PATCH /attachments/1' => 'attachments#update', :id => '1'

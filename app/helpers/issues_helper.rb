@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@ module IssuesHelper
   include Redmine::Export::PDF::IssuesPdfHelper
   include IssueStatusesHelper
 
-  def issue_list(issues, &block)
+  def issue_list(issues, &)
     ancestors = []
     issues.each do |issue|
       while ancestors.any? &&
@@ -34,7 +34,7 @@ module IssuesHelper
     end
   end
 
-  def grouped_issue_list(issues, query, &block)
+  def grouped_issue_list(issues, query, &)
     ancestors = []
     grouped_query_results(issues, query) do |issue, group_name, group_count, group_totals|
       while ancestors.any? &&
@@ -96,12 +96,12 @@ module IssuesHelper
       issue.descendants.visible.
         preload(:status, :priority, :tracker,
                 :assigned_to).sort_by(&:lft)) do |child, level|
-      css = +"issue issue-#{child.id} hascontextmenu #{child.css_classes}"
+      css = "issue issue-#{child.id} hascontextmenu #{child.css_classes}"
       css << " idnt idnt-#{level}" if level > 0
       buttons =
         if manage_relations
           link_to(
-            l(:label_delete_link_to_subtask),
+            sprite_icon('link-break', l(:label_delete_link_to_subtask)),
             issue_path(
               {:id => child.id, :issue => {:parent_issue_id => ''},
                :back_url => issue_path(issue.id), :no_flash => '1'}
@@ -207,8 +207,8 @@ module IssuesHelper
       buttons =
         if manage_relations
           link_to(
-            l(:label_relation_delete),
-            relation_path(relation),
+            sprite_icon('link-break', l(:label_relation_delete)),
+            relation_path(relation, issue_id: issue.id),
             :remote => true,
             :method => :delete,
             :data => {:confirm => l(:text_are_you_sure)},
@@ -392,7 +392,7 @@ module IssuesHelper
 
       content =
         content_tag('hr') +
-        content_tag('p', content_tag('strong', custom_field_name_tag(value.custom_field) )) +
+        content_tag('p', content_tag('strong', custom_field_name_tag(value.custom_field))) +
         content_tag('div', attr_value_tag, class: 'value')
       s << content_tag('div', content, class: "#{value.custom_field.css_classes} attribute")
     end
@@ -445,7 +445,7 @@ module IssuesHelper
 
   def email_issue_attributes(issue, user, html)
     items = []
-    %w(author status priority assigned_to category fixed_version start_date due_date).each do |attribute|
+    %w(author status priority assigned_to category fixed_version start_date due_date parent_issue).each do |attribute|
       if issue.disabled_core_fields.grep(/^#{attribute}(_id)?$/).empty?
         attr_value = (issue.send attribute).to_s
         next if attr_value.blank?
@@ -528,8 +528,8 @@ module IssuesHelper
 
     case detail.property
     when 'attr'
-      field = detail.prop_key.to_s.gsub(/\_id$/, "")
-      label = l(("field_" + field).to_sym)
+      field = detail.prop_key.to_s.delete_suffix('_id')
+      label = l(("field_#{field}").to_sym)
       case detail.prop_key
       when 'due_date', 'start_date'
         value = format_date(detail.value.to_date) if detail.value

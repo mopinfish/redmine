@@ -149,6 +149,7 @@ da:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
       template:
         header:
@@ -381,7 +382,6 @@ da:
   label_help: Hjælp
   label_reported_issues: Rapporterede sager
   label_assigned_to_me_issues: Sager tildelt til mig
-  label_last_login: Sidste logintidspunkt
   label_registered_on: Registreret den
   label_activity: Aktivitet
   label_new: Ny
@@ -493,7 +493,6 @@ da:
   label_day_plural: dage
   label_repository: Repository
   label_repository_plural: Repositories
-  label_browse: Gennemse
   label_revision: Revision
   label_revision_plural: Revisioner
   label_associated_revisions: Tilknyttede revisioner
@@ -1280,7 +1279,7 @@ da:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1293,7 +1292,6 @@ da:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1411,7 +1409,7 @@ da:
     (%{identifier}) below.
   button_add_subtask: Add subtask
   notice_invalid_watcher: 'Invalid watcher: User will not receive any notifications
-    because it does not have access to view this object.'
+    because they do not have access to view this object.'
   button_fetch_changesets: Fetch commits
   permission_view_message_watchers: View message watchers list
   permission_add_message_watchers: Add message watchers
@@ -1491,3 +1489,29 @@ da:
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
   permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval
+  setting_copy_attachments_on_issue_copy: Copy attachments on copy
+  field_thousands_delimiter: Thousands delimiter
+  label_involved_principals: Author / Previous assignee
+  label_attachment_summary:
+    zero: "%{filename}"
+    one: "%{filename} and 1 file"
+    other: "%{filename} and %{count} files"

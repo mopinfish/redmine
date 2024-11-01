@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -359,7 +359,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'a.query.selected', 1
       # assert link properties
       assert_select(
-        'a.query.selected[href=?]',
+        'a.query.selected[title=?][href=?]',
+        'Description for Oepn issues by priority and tracker',
         '/projects/ecookbook/issues?query_id=5',
         :text => "Open issues by priority and tracker"
       )
@@ -705,7 +706,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :query_id => 999
       }
     )
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_index_with_cross_project_query_in_session_should_show_project_issues
@@ -734,7 +735,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           )
     @request.session[:user_id] = 3
     get(:index, :params => {:query_id => q.id})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_private_query_should_be_available_to_its_user
@@ -1187,6 +1188,29 @@ class IssuesControllerTest < Redmine::ControllerTest
       :params => {
         :project_id => 1,
         :query_id => 9,
+        :format => 'pdf'
+      }
+    )
+    assert_response :success
+    assert_equal 'application/pdf', @response.media_type
+  end
+
+  def test_index_pdf_with_query_grouped_by_full_width_text_custom_field
+    field = IssueCustomField.
+      create!(
+        :name => 'Long text', :field_format => 'text',
+        :full_width_layout => '1',
+        :tracker_ids => [1, 3], :is_for_all => true
+      )
+    issue = Issue.find(1)
+    issue.custom_field_values = {field.id => 'This is a long text'}
+    issue.save!
+
+    get(
+      :index,
+      :params => {
+        :set_filter => 1,
+        :c => ['subject', 'description', "cf_#{field.id}"],
         :format => 'pdf'
       }
     )
@@ -1900,6 +1924,73 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_include "\"source.rb\npicture.jpg\"", response.body
   end
 
+  def test_index_with_watchers_column
+    @request.session[:user_id] = 2
+    get(
+      :index,
+      :params => {
+        :c => %w(subject watcher_users),
+        :set_filter => '1',
+        :sort => 'id',
+      }
+    )
+
+    assert_response :success
+    assert_select 'td.watcher_users'
+    assert_select 'tr#issue-2' do
+      assert_select 'td.watcher_users' do
+        assert_select 'a[href=?]', '/users/1', :text => User.find(1).name
+        assert_select 'a[href=?]', '/users/3', :text => User.find(3).name
+      end
+    end
+  end
+
+  def test_index_with_watchers_column_only_visible_watchers
+    @request.session[:user_id] = 3
+    User.find(3).roles.first.remove_permission! :view_issue_watchers
+    get(
+      :index,
+      :params => {
+        :c => %w(subject watcher_users),
+        :set_filter => '1',
+        :sort => 'id',
+      }
+    )
+
+    assert_response :success
+    assert_select 'td.watcher_users'
+    assert_select 'tr#issue-2' do
+      assert_select 'td.watcher_users' do
+        assert_select 'a[href=?]', '/users/1', 0
+        # Currently not implemented, see https://www.redmine.org/issues/29894#note-17
+        # You can only know that you are a watcher yourself
+        # assert_select 'a[href=?]', '/users/3', :text => User.find(3).name
+      end
+    end
+  end
+
+  def test_index_with_watchers_column_as_csv
+    @request.session[:user_id] = 2
+    get(
+      :index,
+      :params => {
+        :c => %w(subject watcher_users),
+        :set_filter => '1',
+        :sort => 'id',
+        :format => 'csv',
+      }
+    )
+
+    assert_response :success
+
+    lines = CSV.parse(response.body)
+    # Issue with ID 2 is the second issue in the CSV
+    # Column 3 is watchers_users
+    watchers = lines[2][2].split("\n").sort
+
+    assert_equal [User.find(3).name, User.find(1).name], watchers
+  end
+
   def test_index_with_estimated_hours_total
     Issue.delete_all
     Issue.generate!(:estimated_hours => '5:30')
@@ -2302,28 +2393,28 @@ class IssuesControllerTest < Redmine::ControllerTest
     Role.non_member.remove_permission!(:view_issues)
     @request.session[:user_id] = 9
     get(:show, :params => {:id => 1})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_show_should_deny_non_member_access_to_private_issue
     Issue.where(:id => 1).update_all(["is_private = ?", true])
     @request.session[:user_id] = 9
     get(:show, :params => {:id => 1})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_show_should_deny_member_access_without_permission
     Role.find(1).remove_permission!(:view_issues)
     @request.session[:user_id] = 2
     get(:show, :params => {:id => 1})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_show_should_deny_member_access_to_private_issue_without_permission
     Issue.where(:id => 1).update_all(["is_private = ?", true])
     @request.session[:user_id] = 3
     get(:show, :params => {:id => 1})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_show_should_allow_author_access_to_private_issue
@@ -2710,6 +2801,17 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_show_should_not_display_watchers_without_permission
+    @request.session[:user_id] = 2
+    Role.find(1).remove_permission! :view_issue_watchers
+    issue = Issue.find(1)
+    issue.add_watcher User.find(2)
+    issue.add_watcher Group.find(10)
+    get(:show, :params => {:id => 1})
+    assert_select 'div#watchers ul', 0
+    assert_select 'h3', {text: /Watchers \(\d*\)/, count: 0}
+  end
+
   def test_show_should_display_watchers_with_gravatars
     @request.session[:user_id] = 2
     issue = Issue.find(1)
@@ -2797,12 +2899,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     # long text custom field should not be render in the attributes div
-    assert_select "div.attributes div.attribute.cf_#{field.id} p strong", 0, :text => 'Long text'
-    assert_select(
-      "div.attributes div.attribute.cf_#{field.id} div.value",
-      0,
-      :text => 'This is a long text'
-    )
+    assert_select "div.attributes div.attribute.cf_#{field.id} p strong", 0
+    assert_select "div.attributes div.attribute.cf_#{field.id} div.value", 0
     # long text custom field should be render under description field
     assert_select "div.description ~ div.attribute.cf_#{field.id} p strong", :text => 'Long text'
     assert_select(
@@ -2951,7 +3049,7 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_show_export_to_pdf
     issue = Issue.find(3)
-    assert issue.relations.select{|r| r.other_issue(issue).visible?}.present?
+    assert issue.relations.any? {|r| r.other_issue(issue).visible?}
     get(
       :show,
       :params => {
@@ -3072,7 +3170,7 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_show_invalid_should_respond_with_404
     get(:show, :params => {:id => 999})
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_show_on_active_project_should_display_edit_links
@@ -3502,7 +3600,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     role.save!
     @request.session[:user_id] = 2
     get(:new, :params => {:project_id => 1})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_new_without_projects_should_respond_with_403
@@ -3510,7 +3608,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
 
     get :new
-    assert_response 403
+    assert_response :forbidden
     assert_select_error /no projects/
   end
 
@@ -3518,7 +3616,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     Project.all.each {|p| p.trackers.clear}
     @request.session[:user_id] = 2
     get :new
-    assert_response 403
+    assert_response :forbidden
     assert_select_error /no projects/
   end
 
@@ -3787,7 +3885,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :project_id => 1
       }
     )
-    assert_response 500
+    assert_response :internal_server_error
     assert_select_error /No default issue/
   end
 
@@ -3800,7 +3898,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :project_id => 1
       }
     )
-    assert_response 500
+    assert_response :internal_server_error
     assert_select_error /No tracker/
   end
 
@@ -3812,7 +3910,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :project_id => 'invalid'
       }
     )
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_new_with_parent_id_should_only_propose_valid_trackers
@@ -3857,10 +3955,11 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
 
     assert_select 'div#trackers_description' do
-      assert_select 'h3', 1, :text => 'Trackers description'
+      assert_select 'h3', :text => 'Trackers description', :count => 1
       # only Bug and Feature have descriptions
-      assert_select 'dt', 2, :text => 'Bug'
-      assert_select 'dd', 2, :text => 'Description for Bug tracker'
+      assert_select 'dt', 2
+      assert_select 'dt', :text => 'Bug', :count => 1
+      assert_select 'dd', :text => 'Description for Bug tracker', :count => 1
     end
   end
 
@@ -3882,6 +3981,49 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
 
     assert_select 'div#trackers_description', 0
+  end
+
+  def test_get_new_should_show_issue_status_description
+    @request.session[:user_id] = 2
+    get :new, :params => {
+      :project_id => 1,
+      :issue => {
+        :status_id => 2
+      }
+    }
+    assert_response :success
+
+    assert_select 'form#issue-form' do
+      assert_select 'a[title=?]', 'View all issue statuses description', :text => 'View all issue statuses description'
+      assert_select 'select[name=?][title=?]', 'issue[status_id]', 'Description for Assigned issue status'
+    end
+
+    assert_select 'div#issue_statuses_description' do
+      assert_select 'h3', :text => 'Issue statuses description', :count => 1
+      assert_select 'dt', 2
+      assert_select 'dt', :text => 'New', :count => 1
+      assert_select 'dd', :text => 'Description for New issue status', :count => 1
+    end
+  end
+
+  def test_get_new_should_not_show_issue_status_description
+    IssueStatus.update_all(:description => '')
+
+    @request.session[:user_id] = 2
+    get :new, :params => {
+      :project_id => 1,
+      :issue => {
+        :status_id => 2
+      }
+    }
+    assert_response :success
+
+    assert_select 'form#issue-form' do
+      assert_select 'a[title=?]', 'View all issue statuses description', 0
+      assert_select 'select[name=?][title=?]', 'issue[status_id]', ''
+    end
+
+    assert_select 'div#issue_statuses_description', 0
   end
 
   def test_get_new_should_show_create_and_follow_button_when_issue_is_subtask_and_back_url_is_present
@@ -4188,7 +4330,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    assert_response 302
+    assert_response :found
     issue = Issue.order('id DESC').first
     assert_equal ['MySQL', 'Oracle'], issue.custom_field_value(1).sort
   end
@@ -4214,7 +4356,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    assert_response 302
+    assert_response :found
     issue = Issue.order('id DESC').first
     assert_equal [''], issue.custom_field_value(1).sort
   end
@@ -4242,7 +4384,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    assert_response 302
+    assert_response :found
     issue = Issue.order('id DESC').first
     assert_equal ['2', '3'], issue.custom_field_value(field).sort
   end
@@ -4374,7 +4516,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
     issue = Issue.order('id DESC').first
     assert_equal Date.parse('2012-07-14'), issue.start_date
@@ -4400,7 +4542,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
     assert_equal 3, issue.tracker_id
   end
@@ -4457,7 +4599,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
     issue = Issue.order('id DESC').first
     assert_equal Issue.find(2), issue.parent
@@ -4477,7 +4619,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
     issue = Issue.order('id DESC').first
     assert_equal Issue.find(2), issue.parent
@@ -4577,7 +4719,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
     issue = Issue.order('id DESC').first
     assert_equal 3, issue.project_id
@@ -4617,7 +4759,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 422
+      assert_response :unprocessable_content
     end
   end
 
@@ -4713,6 +4855,24 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'input[name=?][value="2"]:not(checked)', 'issue[watcher_user_ids][]'
     assert_select 'input[name=?][value="3"][checked=checked]', 'issue[watcher_user_ids][]'
     assert_select 'input[name=?][value="8"][checked=checked]', 'issue[watcher_user_ids][]'
+  end
+
+  def test_post_create_with_failure_should_not_dereference_group_watchers
+    @request.session[:user_id] = 1
+    post(
+      :create,
+      :params => {
+        :project_id => 5,
+        :issue => {
+          :tracker_id => 1,
+          :watcher_user_ids => ['11']
+        }
+      }
+    )
+    assert_response :success
+
+    assert_select 'input[name=?][value="8"][checked=checked]', 'issue[watcher_user_ids][]', 0
+    assert_select 'input[name=?][value="11"][checked=checked]', 'issue[watcher_user_ids][]', 1
   end
 
   def test_post_create_should_ignore_non_safe_attributes
@@ -4893,7 +5053,7 @@ class IssuesControllerTest < Redmine::ControllerTest
             }
           }
         )
-        assert_response 302
+        assert_response :found
       end
     end
 
@@ -5217,7 +5377,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :copy_from => 99999
       }
     )
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_create_as_copy_on_different_project
@@ -5454,6 +5614,47 @@ class IssuesControllerTest < Redmine::ControllerTest
               :project_id => 1,
               :copy_from => 1,
               :link_copy => '1',
+              :issue => {
+                :subject => 'Copy'
+              }
+            }
+          )
+        end
+      end
+    end
+  end
+
+  def test_create_as_copy_should_always_copy_attachments_by_settings
+    assert_equal 4, Issue.find(3).attachments.size
+    with_settings :copy_attachments_on_issue_copy => 'yes' do
+      @request.session[:user_id] = 2
+      assert_difference 'Issue.count' do
+        assert_difference 'Attachment.count', 4 do
+          post(
+            :create,
+            :params => {
+              :project_id => 1,
+              :copy_from => 3,
+              :issue => {
+                :subject => 'Copy'
+              }
+            }
+          )
+        end
+      end
+    end
+  end
+
+  def test_create_as_copy_should_never_copy_attachments_by_settings
+    with_settings :copy_attachments_on_issue_copy => 'no' do
+      @request.session[:user_id] = 2
+      assert_difference 'Issue.count' do
+        assert_no_difference 'Attachment.count' do
+          post(
+            :create,
+            :params => {
+              :project_id => 1,
+              :copy_from => 3,
               :issue => {
                 :subject => 'Copy'
               }
@@ -6029,7 +6230,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
   end
 
   def test_put_update_with_tracker_change
@@ -6312,7 +6513,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal parent, issue.parent
   end
 
@@ -6744,7 +6945,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal 'Changed subject', issue.reload.subject
   end
 
@@ -6764,7 +6965,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal 'Original subject', issue.reload.subject
   end
 
@@ -6781,7 +6982,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal 2, issue.reload.assigned_to_id
   end
 
@@ -7131,7 +7332,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     # check that the issues were updated
     assert_equal [7, 7], Issue.where(:id =>[1, 2]).collect {|i| i.priority.id}
 
@@ -7164,7 +7365,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
       assert_equal [group, group], Issue.where(:id => [1, 2]).collect {|i| i.assigned_to}
     end
   end
@@ -7186,7 +7387,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     # check that the issues were updated
     assert_equal [7, 7, 7], Issue.find([1, 2, 6]).map(&:priority_id)
 
@@ -7217,7 +7418,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 403
+    assert_response :forbidden
     assert_not_equal "Bulk should fail", Journal.last.notes
   end
 
@@ -7237,7 +7438,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
       # 4 emails for 2 members and 2 issues
       # 1 email for a watcher of issue #2
       assert_equal 5, ActionMailer::Base.deliveries.size
@@ -7324,7 +7525,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     issue = Issue.find(1)
     assert issue.closed?
   end
@@ -7394,7 +7595,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     parent = Issue.find(2)
     assert_equal parent.id, Issue.find(1).parent_id
     assert_equal parent.id, Issue.find(3).parent_id
@@ -7434,7 +7635,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
 
     issue = Issue.find(1)
     journal = issue.journals.reorder('created_on DESC').first
@@ -7460,7 +7661,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal '', Issue.find(1).custom_field_value(1)
     assert_equal '', Issue.find(3).custom_field_value(1)
   end
@@ -7483,7 +7684,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal ['MySQL', 'Oracle'], Issue.find(1).custom_field_value(1).sort
     assert_equal ['MySQL', 'Oracle'], Issue.find(3).custom_field_value(1).sort
     # the custom field is not associated with the issue tracker
@@ -7509,7 +7710,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal [''], Issue.find(1).custom_field_value(1)
     assert_equal [''], Issue.find(3).custom_field_value(1)
   end
@@ -7528,7 +7729,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     # check that the issues were updated
     assert_nil Issue.find(2).assigned_to
   end
@@ -7741,7 +7942,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           :copy => '1'
         }
       )
-      assert_response 302
+      assert_response :found
     end
   end
 
@@ -7758,7 +7959,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :copy => '1'
       }
     )
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_bulk_copy_on_different_project_without_add_issues_permission_should_be_denied
@@ -7774,7 +7975,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :copy => '1'
       }
     )
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_bulk_copy_should_allow_not_changing_the_issue_attributes
@@ -7921,6 +8122,47 @@ class IssuesControllerTest < Redmine::ControllerTest
             }
           }
         )
+      end
+    end
+  end
+
+  def test_bulk_copy_should_never_copy_attachments_by_settings
+    with_settings :copy_attachments_on_issue_copy => 'no' do
+      @request.session[:user_id] = 2
+      assert_difference 'Issue.count' do
+        assert_no_difference 'Attachment.count' do
+          post(
+            :bulk_update,
+            :params => {
+              :ids => [3],
+              :copy => '1',
+              :issue => {
+                :project_id => ''
+              }
+            }
+          )
+        end
+      end
+    end
+  end
+
+  def test_bulk_copy_should_always_copy_attachments_by_settings
+    assert_equal 4, Issue.find(3).attachments.size
+    with_settings :copy_attachments_on_issue_copy => 'yes' do
+      @request.session[:user_id] = 2
+      assert_difference 'Issue.count' do
+        assert_difference 'Attachment.count', 4 do
+          post(
+            :bulk_update,
+            :params => {
+              :ids => [3],
+              :copy => '1',
+              :issue => {
+                :project_id => ''
+              }
+            }
+          )
+        end
       end
     end
   end
@@ -8123,14 +8365,16 @@ class IssuesControllerTest < Redmine::ControllerTest
     leaf = Issue.generate!
     TimeEntry.generate!(:issue => leaf)
     @request.session[:user_id] = 2
-    delete(
-      :destroy,
-      :params => {
-        :ids => [parent.id, leaf.id]
-      }
-    )
+    with_settings :timespan_format => 'minutes' do
+      delete(
+        :destroy,
+        :params => {
+          :ids => [parent.id, leaf.id]
+        }
+      )
+    end
     assert_response :success
-    assert_select 'p', :text => /3\.00 hours were reported/
+    assert_select 'p', :text => /3:00 hours were reported/
   end
 
   def test_destroy_issues_and_destroy_time_entries
@@ -8216,7 +8460,7 @@ class IssuesControllerTest < Redmine::ControllerTest
             :reassign_to_id => target.id
           }
         )
-        assert_response 302
+        assert_response :found
         assert_equal 'Successful deletion.', flash[:notice]
       end
     end
@@ -8339,7 +8583,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    assert_response 302
+    assert_response :found
     assert_equal 'Successful deletion.', flash[:notice]
   end
 
@@ -8348,7 +8592,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_no_difference 'Issue.count' do
       delete(:destroy, :params => {:id => 999})
     end
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_destroy_with_permission_on_tracker_should_be_allowed
@@ -8360,7 +8604,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_difference 'Issue.count', -1 do
       delete(:destroy, :params => {:id => issue.id})
     end
-    assert_response 302
+    assert_response :found
     assert_equal 'Successful deletion.', flash[:notice]
   end
 
@@ -8373,7 +8617,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_no_difference 'Issue.count' do
       delete(:destroy, :params => {:id => issue.id})
     end
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_default_search_scope
@@ -8585,6 +8829,21 @@ class IssuesControllerTest < Redmine::ControllerTest
         @request.session[:issue_query] = nil
         get :index
         assert_select 'h2', text: 'Issues'
+      end
+    end
+  end
+
+  def test_get_new_with_issue_field_five_percent_increments
+    with_settings :issue_done_ratio => 'issue_field', :issue_done_ratio_interval => 5 do
+      @request.session[:user_id] = 1
+      get :new
+      assert_response :success
+
+      assert_select 'select#issue_done_ratio' do
+        assert_select 'option', count: 21
+        assert_select 'option:nth-of-type(1)', text: '0 %'
+        assert_select 'option:nth-of-type(2)', text: '5 %'
+        assert_select 'option:nth-of-type(21)', text: '100 %'
       end
     end
   end

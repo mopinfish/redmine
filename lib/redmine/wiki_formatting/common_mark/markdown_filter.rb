@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ module Redmine
       # options
       class MarkdownFilter < HTML::Pipeline::TextFilter
         def initialize(text, context = nil, result = nil)
-          super text, context, result
+          super
           @text = @text.delete "\r"
         end
 

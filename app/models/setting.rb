@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class Setting < ActiveRecord::Base
+class Setting < ApplicationRecord
   PASSWORD_CHAR_CLASSES = {
     'uppercase'     => /[A-Z]/,
     'lowercase'     => /[a-z]/,
@@ -111,7 +111,7 @@ class Setting < ActiveRecord::Base
       v = YAML.safe_load(v, permitted_classes: Rails.configuration.active_record.yaml_column_permitted_classes)
       v = force_utf8_strings(v)
     end
-    v = v.to_sym if available_settings[name]['format'] == 'symbol' && !v.blank?
+    v = v.to_sym if available_settings[name]['format'] == 'symbol' && v.present?
     v
   end
 
@@ -169,7 +169,7 @@ class Setting < ActiveRecord::Base
        /\s*,\s*/]
     ].each do |enable_regex, regex_field, delimiter|
       if settings.key?(regex_field) || settings.key?(enable_regex)
-        regexp = Setting.send("#{enable_regex}?")
+        regexp = Setting.send(:"#{enable_regex}?")
         if settings.key?(enable_regex)
           regexp = settings[enable_regex].to_s != '0'
         end
@@ -187,7 +187,7 @@ class Setting < ActiveRecord::Base
     if settings.key?(:mail_from)
       begin
         mail_from = Mail::Address.new(settings[:mail_from])
-        raise unless EmailAddress::EMAIL_REGEXP.match?(mail_from.address)
+        raise unless URI::MailTo::EMAIL_REGEXP.match?(mail_from.address)
       rescue
         messages << [:mail_from, l('activerecord.errors.messages.invalid')]
       end

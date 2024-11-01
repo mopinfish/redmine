@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,7 +19,6 @@
 
 module Redmine
   module MimeType
-
     MIME_TYPES = {
       'text/plain' => 'txt,tpl,properties,patch,diff,ini,readme,install,upgrade,sql',
       'text/css' => 'css',

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@ class VersionsController < ApplicationController
 
   accept_api_auth :index, :show, :create, :update, :destroy
 
+  include VersionsHelper
   helper :custom_fields
   helper :projects
 
@@ -73,6 +74,9 @@ class VersionsController < ApplicationController
           to_a
       end
       format.api
+      format.text do
+        send_data(version_to_text(@version), type: 'text/plain', filename: "#{@version.name}.txt")
+      end
     end
   end
 
@@ -161,7 +165,7 @@ class VersionsController < ApplicationController
           flash[:error] = l(:notice_unable_delete_version)
           redirect_to settings_project_path(@project, :tab => 'versions')
         end
-        format.api  {head :unprocessable_entity}
+        format.api  {head :unprocessable_content}
       end
     end
   end

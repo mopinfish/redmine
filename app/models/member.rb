@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class Member < ActiveRecord::Base
+class Member < ApplicationRecord
   belongs_to :user
   belongs_to :principal, :foreign_key => 'user_id'
   has_many :member_roles, :dependent => :destroy
@@ -81,6 +81,8 @@ class Member < ActiveRecord::Base
   end
 
   def <=>(member)
+    return nil unless member.is_a?(Member)
+
     a, b = roles.sort, member.roles.sort
     if a == b
       if principal

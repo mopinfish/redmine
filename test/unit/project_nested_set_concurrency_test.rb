@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,7 +38,7 @@ class ProjectNestedSetConcurrencyTest < ActiveSupport::TestCase
     p = generate_project!
     p.destroy
 
-    assert_difference 'Project.count', 60 do
+    assert_difference 'Project.async_count.value', 60 do
       threads = []
       3.times do |i|
         threads << Thread.new(i) do

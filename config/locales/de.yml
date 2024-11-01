@@ -153,6 +153,7 @@ de:
         must_contain_digits: "muss Zahlen (0-9) enthalten"
         must_contain_special_chars: "muss Sonderzeichen (!, $, %, ...) enthalten"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Bitte auswählen
 
@@ -280,6 +281,7 @@ de:
   field_active: Aktiv
   field_activity: Aktivität
   field_admin: Administrator
+  field_any_searchable: Durchsuchbarer Text
   field_assignable: Tickets können dieser Rolle zugewiesen werden
   field_assigned_to: Zugewiesen an
   field_assigned_to_role: Zuständigkeitsrolle
@@ -398,6 +400,7 @@ de:
   field_watcher: Beobachter
   field_default_assigned_to: Standardbearbeiter
   field_unique_id: Eindeutige ID
+  field_estimated_remaining_hours: Geschätzter verbleibender Aufwand
 
   general_csv_decimal_separator: ','
   general_csv_encoding: ISO-8859-1
@@ -461,7 +464,6 @@ de:
   label_board_sticky: Wichtig (immer oben)
   label_boolean: Boolean
   label_branch: Zweig
-  label_browse: Codebrowser
   label_bulk_edit_selected_issues: Alle ausgewählten Tickets bearbeiten
   label_bulk_edit_selected_time_entries: Ausgewählte Zeitaufwände bearbeiten
   label_calendar: Kalender
@@ -611,7 +613,6 @@ de:
   label_jump_to_a_project: Zu einem Projekt springen...
   label_language_based: Sprachabhängig
   label_last_changes: "%{count} letzte Änderungen"
-  label_last_login: Letzte Anmeldung
   label_last_month: voriger Monat
   label_last_n_days: "die letzten %{count} Tage"
   label_last_n_weeks: letzte %{count} Wochen
@@ -783,7 +784,7 @@ de:
   label_user_activity: "Aktivität von %{value}"
   label_user_anonymous: Anonym
   label_user_mail_no_self_notified: "Ich möchte nicht über Änderungen benachrichtigt werden, die ich selbst durchführe."
-  label_user_mail_notify_about_high_priority_issues_html: "Benachrichtige mich über Aufgaben mit einer Priorität von <em>%{prio}</em> oder höher"
+  label_user_mail_notify_about_high_priority_issues_html: "Benachrichtige mich zusätzlich über Aufgaben mit einer Priorität von <em>%{prio}</em> oder höher"
   label_user_mail_option_all: "Für alle Ereignisse in all meinen Projekten"
   label_user_mail_option_none: Keine Ereignisse
   label_user_mail_option_only_my_events: Nur für Angelegenheiten, die ich beobachte oder an denen ich beteiligt bin
@@ -1271,7 +1272,7 @@ de:
   label_trackers_description: Beschreibung des Trackers
   label_open_trackers_description: Beschreibung aller Tracker anzeigen
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimentell)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Thema des übergeordneten Tickets
 
   permission_edit_own_issues: Eigene Tickets bearbeiten
@@ -1284,7 +1285,6 @@ de:
   label_import_notifications: Versende E-Mail-Benachrichtigungen während des Imports
   field_recently_used_projects: Anzahl kürzlich verwendeter Projekte in der Projekt-Jump-Box
   label_optgroup_bookmarks: Lesezeichen
-  label_optgroup_others: Andere Projekte
   label_optgroup_recents: Kürzlich verwendet
   button_project_bookmark: Lesezeichen hinzufügen
   button_project_bookmark_delete: Lesezeichen entfernen
@@ -1438,3 +1438,27 @@ de:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  label_auto_watch_on_issue_created: Issues I created
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval
+  setting_copy_attachments_on_issue_copy: Copy attachments on copy
+  field_thousands_delimiter: Thousands delimiter
+  label_involved_principals: Author / Previous assignee
+  label_attachment_summary:
+    zero: "%{filename}"
+    one: "%{filename} and 1 file"
+    other: "%{filename} and %{count} files"

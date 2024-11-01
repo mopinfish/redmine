@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -272,7 +272,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v[updated_by][]=me', report_url
 
       assert_select 'table.issues tbody tr', 2
-      assert_select 'table.issues tbody tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'table.issues tbody tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'table.issues tbody tr[id=?]', 'issue-14', 0
     end
   end
@@ -311,7 +313,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
       assert_select 'tr', 1
-      assert_select 'tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'tr[id=?]', 'issue-4', 0
     end
   end
@@ -339,7 +343,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
       assert_select 'table.issues tbody tr', 10
-      assert_select 'table.issues tbody tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'table.issues tbody tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'table.issues tbody tr[id=?]', 'issue-4', 0
     end
   end
@@ -371,7 +377,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
       assert_select 'tr', 1
-      assert_select 'tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'tr[id=?]', 'issue-4', 0
     end
   end
@@ -436,24 +444,22 @@ class MyControllerTest < Redmine::ControllerTest
 
     assert_select 'form[data-cm-url=?]', '/issues/context_menu'
 
-    assert_select 'table.cal' do
-      assert_select 'tr' do
-        assert_select 'td' do
+    assert_select 'ul.cal' do
+      assert_select 'li' do
+        assert_select(
+          'div.issue.hascontextmenu.tooltip.starting.ending',
+          :text => /eCookbook.*#{subject}/m
+        ) do
           assert_select(
-            'div.issue.hascontextmenu.tooltip.starting.ending',
-            :text => /eCookbook.*#{subject}/m
-          ) do
-            assert_select(
-              'a.issue[href=?]', "/issues/#{issue.id}",
-              :text => "Bug ##{issue.id}"
-            )
-            assert_select(
-              'input[name=?][type=?][value=?]',
-              'ids[]',
-              'checkbox',
-              issue.id.to_s
-            )
-          end
+            'a.issue[href=?]', "/issues/#{issue.id}",
+            :text => "Bug ##{issue.id}"
+          )
+          assert_select(
+            'input[name=?][type=?][value=?]',
+            'ids[]',
+            'checkbox',
+            issue.id.to_s
+          )
         end
       end
     end
@@ -724,7 +730,7 @@ class MyControllerTest < Redmine::ControllerTest
         :block => 'invalid'
       }
     )
-    assert_response 422
+    assert_response :unprocessable_content
   end
 
   def test_remove_block

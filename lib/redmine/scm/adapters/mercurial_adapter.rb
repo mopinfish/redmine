@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -74,11 +74,6 @@ module Redmine
           def template_path_for(version)
             "#{HELPERS_DIR}/#{TEMPLATE_NAME}-1.0.#{TEMPLATE_EXTENSION}"
           end
-        end
-
-        def initialize(url, root_url=nil, login=nil, password=nil, path_encoding=nil)
-          super
-          @path_encoding = path_encoding.blank? ? 'UTF-8' : path_encoding
         end
 
         def path_encoding
@@ -318,7 +313,7 @@ module Redmine
         private_constant :HG_EARLY_BOOL_ARG, :HG_EARLY_LIST_ARG
 
         # Runs 'hg' command with the given args
-        def hg(*args, &block)
+        def hg(*args, &)
           # as of hg 4.4.1, early parsing of bool options is not terminated at '--'
           if args.any? {|s| HG_EARLY_BOOL_ARG.match?(s)}
             raise HgCommandArgumentError, "malicious command argument detected"
@@ -336,7 +331,7 @@ module Redmine
           ret =
             shellout(
               self.class.sq_bin + ' ' + full_args.map {|e| shell_quote e.to_s}.join(' '),
-              &block
+              &
             )
           if $? && $?.exitstatus != 0
             raise HgCommandAborted, "hg exited with non-zero status: #{$?.exitstatus}"
@@ -363,7 +358,7 @@ module Redmine
         def as_ary(o)
           return [] unless o
 
-          o.is_a?(Array) ? o : Array[o]
+          o.is_a?(Array) ? o : [o]
         end
         private :as_ary
       end

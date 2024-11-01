@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 module WatchersHelper
-
   def watcher_link(objects, user)
     return '' unless user && user.logged?
 
@@ -34,7 +33,7 @@ module WatchersHelper
     )
     method = watched ? 'delete' : 'post'
 
-    link_to text, url, :remote => true, :method => method, :class => css
+    link_to sprite_icon('fav', text), url, :remote => true, :method => method, :class => css
   end
 
   # Returns the css class used to identify watch links for a given +object+
@@ -46,9 +45,9 @@ module WatchersHelper
 
   # Returns a comma separated list of users watching the given object
   def watchers_list(object)
-    remove_allowed = User.current.allowed_to?("delete_#{object.class.name.underscore}_watchers".to_sym, object.project)
+    remove_allowed = User.current.allowed_to?(:"delete_#{object.class.name.underscore}_watchers", object.project)
     content = ''.html_safe
-    lis = object.watcher_users.collect do |user|
+    lis = object.watcher_users.sorted.collect do |user|
       s = ''.html_safe
       s << avatar(user, :size => "16").to_s
       s << link_to_principal(user, class: user.class.to_s.downcase)
@@ -62,7 +61,7 @@ module WatchersHelper
                :object_id => object.id,
                :user_id => user}
         s << ' '
-        s << link_to(l(:button_delete), url,
+        s << link_to(sprite_icon('del', l(:button_delete)), url,
                      :remote => true, :method => 'delete',
                      :class => "delete icon-only icon-del",
                      :title => l(:button_delete))
@@ -74,7 +73,7 @@ module WatchersHelper
 
   def watchers_checkboxes(object, users, checked=nil)
     users.map do |user|
-      c = checked.nil? ? object.watched_by?(user) : checked
+      c = checked.nil? ? object.watcher_user_ids.include?(user.id) : checked
       tag = check_box_tag 'issue[watcher_user_ids][]', user.id, c, :id => nil
       content_tag 'label', "#{tag} #{h(user)}".html_safe,
                   :id => "issue_watcher_user_ids_#{user.id}",

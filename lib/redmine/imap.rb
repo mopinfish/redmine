@@ -1,7 +1,7 @@
 # frozen_string_literal: false
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -36,7 +36,7 @@ module Redmine
         imap.login(imap_options[:username], imap_options[:password]) unless imap_options[:username].nil?
         imap.select(folder)
         imap.uid_search(['NOT', 'SEEN']).each do |uid|
-          msg = imap.uid_fetch(uid,'RFC822')[0].attr['RFC822']
+          msg = imap.uid_fetch(uid, 'RFC822')[0].attr['RFC822']
           logger.debug "Receiving message #{uid}" if logger && logger.debug?
           if MailHandler.safe_receive(msg, options)
             logger.debug "Message #{uid} successfully received" if logger && logger.debug?

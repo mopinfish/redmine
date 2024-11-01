@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -187,7 +187,7 @@ module Redmine
         end
       end
 
-      def parse_keyword(custom_field, keyword, &block)
+      def parse_keyword(custom_field, keyword, &)
         separator = Regexp.escape ","
         keyword = keyword.dup.to_s
 
@@ -250,7 +250,7 @@ module Redmine
         casted = cast_value(custom_field, value, customized)
         if html && custom_field.url_pattern.present?
           texts_and_urls = Array.wrap(casted).map do |single_value|
-            text = view.format_object(single_value, false).to_s
+            text = view.format_object(single_value, html: false).to_s
             url = url_from_pattern(custom_field, single_value, customized)
             [text, url]
           end
@@ -276,15 +276,15 @@ module Redmine
       # %m1%, %m2%... => capture groups matches of the custom field regexp if defined
       def url_from_pattern(custom_field, value, customized)
         url = custom_field.url_pattern.to_s.dup
-        url.gsub!('%value%') {Addressable::URI.encode value.to_s}
-        url.gsub!('%id%') {Addressable::URI.encode customized.id.to_s}
+        url.gsub!('%value%') {Addressable::URI.encode_component value.to_s}
+        url.gsub!('%id%') {Addressable::URI.encode_component customized.id.to_s}
         url.gsub!('%project_id%') do
-          Addressable::URI.encode(
+          Addressable::URI.encode_component(
             (customized.respond_to?(:project) ? customized.project.try(:id) : nil).to_s
           )
         end
         url.gsub!('%project_identifier%') do
-          Addressable::URI.encode(
+          Addressable::URI.encode_component(
             (customized.respond_to?(:project) ? customized.project.try(:identifier) : nil).to_s
           )
         end
@@ -292,7 +292,7 @@ module Redmine
           url.gsub!(%r{%m(\d+)%}) do
             m = $1.to_i
             if matches ||= value.to_s.match(Regexp.new(custom_field.regexp))
-              Addressable::URI.encode matches[m].to_s
+              Addressable::URI.encode_component matches[m].to_s
             end
           end
         end
@@ -476,6 +476,7 @@ module Redmine
     class Numeric < Unbounded
       self.form_partial = 'custom_fields/formats/numeric'
       self.totalable_supported = true
+      field_attributes :thousands_delimiter
 
       def order_statement(custom_field)
         # Make the database cast values into numeric
@@ -539,8 +540,9 @@ module Redmine
       end
 
       def validate_single_value(custom_field, value, customized=nil)
+        value = normalize_float(value)
         errs = super
-        errs << ::I18n.t('activerecord.errors.messages.invalid') unless (Kernel.Float(value) rescue nil)
+        errs << ::I18n.t('activerecord.errors.messages.invalid') unless Kernel.Float(value, exception: false)
         errs
       end
 
@@ -828,6 +830,8 @@ module Redmine
     end
 
     class EnumerationFormat < RecordList
+      self.customized_class_names = nil
+
       add 'enumeration'
       self.form_partial = 'custom_fields/formats/enumeration'
 

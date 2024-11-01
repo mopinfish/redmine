@@ -74,7 +74,7 @@ sq:
   number:
     format:
       separator: "."
-      delimiter: ""
+      delimiter: ","
       precision: 3
 
     human:
@@ -137,6 +137,7 @@ sq:
         must_contain_digits: "duhet të përmbajë shifra (0-9)"
         must_contain_special_chars: "duhet të përmbajë shenja speciale (!, $, %, …)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Ju lutemi, përzgjidhni
 
@@ -653,7 +654,6 @@ sq:
   label_assigned_issues: Çështje të caktuara
   label_assigned_to_me_issues: Çështje të caktuara mua
   label_updated_issues: Çështje të përditësuara
-  label_last_login: Lidhja e e fundit
   label_registered_on: Regjistruar më
   label_activity: Veprimtari
   label_user_activity: "Veprimtari për %{value}"
@@ -799,7 +799,6 @@ sq:
   label_repository: Depo
   label_repository_new: Depo e re
   label_repository_plural: Depo
-  label_browse: Shfletoni
   label_branch: Degë
   label_tag: Etiketë
   label_revision: Rishikim
@@ -1073,7 +1072,6 @@ sq:
   label_font_monospace: Shkronja Monospace
   label_font_proportional: Shkronja Proportional
   label_optgroup_bookmarks: Faqerojtës
-  label_optgroup_others: Projekte të tjera
   label_optgroup_recents: Përdorur së fundi
   label_last_notes: Shënimet e fundit
   label_nothing_to_preview: Asgjë për paraparje
@@ -1082,7 +1080,7 @@ sq:
   label_trackers_description: Përshkrim gjurmuesish
   label_open_trackers_description: Shihni krejt përshkrimin e gjurmuesve
   label_preferred_body_part_text: Tekst
-  label_preferred_body_part_html: HTML (eksperimentale)
+  label_preferred_body_part_html: HTML
   label_issue_history_properties: Ndryshime vetish
   label_issue_history_notes: Shënime
   label_last_tab_visited: Skeda e vizituar e fundit
@@ -1356,7 +1354,7 @@ sq:
     (%{identifier}) below.
   button_add_subtask: Add subtask
   notice_invalid_watcher: 'Invalid watcher: User will not receive any notifications
-    because it does not have access to view this object.'
+    because they do not have access to view this object.'
   button_fetch_changesets: Fetch commits
   permission_view_message_watchers: View message watchers list
   permission_add_message_watchers: Add message watchers
@@ -1436,3 +1434,29 @@ sq:
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
   permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval
+  setting_copy_attachments_on_issue_copy: Copy attachments on copy
+  field_thousands_delimiter: Thousands delimiter
+  label_involved_principals: Author / Previous assignee
+  label_attachment_summary:
+    zero: "%{filename}"
+    one: "%{filename} and 1 file"
+    other: "%{filename} and %{count} files"
